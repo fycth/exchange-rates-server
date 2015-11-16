@@ -1,0 +1,11 @@
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+             version="2.0">
+    <persistence-unit name="com.sergiienko.xrserver.jpa">
+        <description>Hibernate using JPA</description>
+        <class>com.sergiienko.xrserver.models.RateModel</class>
+        <class>com.sergiienko.xrserver.models.XMLParserModel</class>
+        <class>com.sergiienko.xrserver.models.SourceModel</class>
+    </persistence-unit>
+</persistence>
