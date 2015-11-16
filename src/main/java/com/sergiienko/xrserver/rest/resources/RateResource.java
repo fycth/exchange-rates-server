@@ -104,13 +104,14 @@ public class RateResource {
 
     private Date get_t_max(String to) {
         DateFormat df = new SimpleDateFormat("yyyyMMddHHmm");
-        if (null != to)
+        if (null != to) {
             if (8 == to.length()) to += "2359";
             else if (10 == to.length()) to += "59";
-        try {
-            return(df.parse(to));
-        } catch (Exception e) {
-            logger.error("Unable to parse '" + to + "' to-string: " + e);
+            try {
+                return (df.parse(to));
+            } catch (Exception e) {
+                logger.error("Unable to parse '" + to + "' to-string: " + e);
+            }
         }
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.MINUTE, 0);
