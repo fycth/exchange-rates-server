@@ -1,22 +1,14 @@
 package com.sergiienko.xrserver.models;
 
-import java.io.Serializable;
 import java.util.Date;
 import javax.persistence.*;
-import javax.xml.bind.annotation.XmlRootElement;
 
-/**
- * Author: ${FULLNAME}
- * Date: 11/11/15
- * Time: 5:33 PM
- */
 @Entity
 @Table(name="rates")
-@XmlRootElement()
-public class RateModel implements Serializable {
+public class RateModel {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
-    public Long id;
+    public Integer id;
 
     @Column(name = "name")
     public String name;
@@ -25,30 +17,25 @@ public class RateModel implements Serializable {
     public Double rate;
 
     @Column(name = "source")
-    public Long source;
+    public Integer source;
 
     @Column(name = "time")
     public Date time;
 
     public RateModel() {}
 
-    public RateModel(String currency, String rate, Long source) {
-//        Calendar calendar = Calendar.getInstance();
-//        calendar.set(Calendar.MINUTE, 0);
-//        calendar.set(Calendar.SECOND, 0);
-//        calendar.set(Calendar.MILLISECOND, 0);
+    public RateModel(String currency, Double rate, Integer source) {
         this.name = currency;
-        this.rate = Double.parseDouble(rate);
+        this.rate = rate;
         this.source = source;
-//        this.time = calendar.getTime();
         this.time = new Date();
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -60,11 +47,11 @@ public class RateModel implements Serializable {
         this.name = name;
     }
 
-    public Long getSource() {
+    public Integer getSource() {
         return source;
     }
 
-    public void setSource(Long source) {
+    public void setSource(Integer source) {
         this.source = source;
     }
 

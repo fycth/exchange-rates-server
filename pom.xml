@@ -19,6 +19,9 @@
         <quartzVersion>2.2.2</quartzVersion>
         <junitVersion>4.12</junitVersion>
         <apacheCommonsVersion>3.2</apacheCommonsVersion>
+        <reflectionsVersion>0.9.10</reflectionsVersion>
+        <orgJSONVersion>20150729</orgJSONVersion>
+        <c3poVersion>0.9.5.1</c3poVersion>
     </properties>
 
     <dependencies>
@@ -43,9 +46,9 @@
             <version>${jerseyVersion}</version>
         </dependency>
         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-c3p0</artifactId>
-            <version>${hibernateVersion}</version>
+            <groupId>com.mchange</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>${c3poVersion}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -80,6 +83,11 @@
             <version>${jettyVersion}</version>
         </dependency>
         <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-webapp</artifactId>
+            <version>${jettyVersion}</version>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>${slf4jVersion}</version>
@@ -93,6 +101,21 @@
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
             <version>${hibernateVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-c3p0</artifactId>
+            <version>${hibernateVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>${reflectionsVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>${orgJSONVersion}</version>
         </dependency>
     </dependencies>
 

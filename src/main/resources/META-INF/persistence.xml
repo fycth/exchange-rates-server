@@ -5,7 +5,7 @@
     <persistence-unit name="com.sergiienko.xrserver.jpa">
         <description>Hibernate using JPA</description>
         <class>com.sergiienko.xrserver.models.RateModel</class>
-        <class>com.sergiienko.xrserver.models.XMLParserModel</class>
+        <class>com.sergiienko.xrserver.models.GroupModel</class>
         <class>com.sergiienko.xrserver.models.SourceModel</class>
     </persistence-unit>
 </persistence>

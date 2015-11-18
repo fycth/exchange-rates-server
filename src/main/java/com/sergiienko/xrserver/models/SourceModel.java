@@ -2,17 +2,12 @@ package com.sergiienko.xrserver.models;
 
 import javax.persistence.*;
 
-/**
- * Author: ${FULLNAME}
- * Date: 11/11/15
- * Time: 5:33 PM
- */
 @Entity
 @Table(name="sources")
 public class SourceModel {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
-    public Long id;
+    public Integer id;
 
     @Column(name = "name")
     public String name;
@@ -23,16 +18,19 @@ public class SourceModel {
     @Column(name = "descr")
     public String descr;
 
-    @Column(name = "type")
-    public int type;
+    @Column(name = "parser_class_name")
+    public String parser_class_name;
+
+    @Column(name = "enabled")
+    public Boolean enabled;
 
     public SourceModel() {}
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -60,11 +58,19 @@ public class SourceModel {
         this.descr = descr;
     }
 
-    public int getType() {
-        return type;
+    public String getParserClassName() {
+        return parser_class_name;
     }
 
-    public void setType(int type) {
-        this.type = type;
+    public void setParserClassName(String parser_class_name) {
+        this.parser_class_name = parser_class_name;
+    }
+
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
     }
 }

@@ -8,9 +8,9 @@ public class ResRate {
     public String name;
     public Double rate;
     public Date time;
-    public Long source;
+    public Integer source;
 
-    public ResRate(String name, Double rate, Date time, Long source) {
+    public ResRate(String name, Double rate, Date time, Integer source) {
         this.name = name;
         this.rate = rate;
         this.time = time;
@@ -41,11 +41,11 @@ public class ResRate {
         this.time = time;
     }
 
-    public Long getSource() {
+    public Integer getSource() {
         return source;
     }
 
-    public void setSource(Long source) {
+    public void setSource(Integer source) {
         this.source = source;
     }
 }

@@ -34,7 +34,7 @@ public class RateResource {
     @Path("/current")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<Long, List<ResRate>> listCurrentRates(@QueryParam("from") String from, @QueryParam("to") String to) {
+    public Map<Integer, List<ResRate>> listCurrentRates(@QueryParam("from") String from, @QueryParam("to") String to) {
         Date t_min = get_t_min(from);
         Date t_max = get_t_max(to);
         entityManager.getTransaction().begin();
@@ -44,7 +44,7 @@ public class RateResource {
         List<ResRate> results = q.getResultList();
         entityManager.getTransaction().commit();
         entityManager.close();
-        Map<Long, List<ResRate>> m = new HashMap<Long,List<ResRate>>();
+        Map<Integer, List<ResRate>> m = new HashMap<Integer,List<ResRate>>();
         for (ResRate r : results) {
             if (null == m.get(r.getSource())) m.put(r.getSource(), new ArrayList<ResRate>());
             m.get(r.getSource()).add(r);
@@ -56,7 +56,7 @@ public class RateResource {
     @Path("/current/{source}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<ResRate> listCurrentRates(@PathParam("source") Long source, @QueryParam("from") String from, @QueryParam("to") String to) {
+    public List<ResRate> listCurrentRates(@PathParam("source") Integer source, @QueryParam("from") String from, @QueryParam("to") String to) {
         Date t_min = get_t_min(from);
         Date t_max = get_t_max(to);
         entityManager.getTransaction().begin();
@@ -75,7 +75,7 @@ public class RateResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public RateModel newRate(@PathParam("currency") String currency, @PathParam("rate") String rate) {
-        RateModel rm = new RateModel(currency,rate,new Long(-1));
+        RateModel rm = new RateModel(currency,Double.parseDouble(rate),new Integer(-1));
         entityManager.getTransaction().begin();
         entityManager.persist(rm);
         entityManager.getTransaction().commit();
