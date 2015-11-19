@@ -141,8 +141,11 @@ public class AdminResource {
         group.setSources(sources.toArray(new Integer[sources.size()]));
         group.setDescr(descr);
         group.setName(name);
+        if (null != dflt) entityManager.createQuery("UPDATE GroupModel SET dflt=:state WHERE id<>:groupid").
+                setParameter("state",false).setParameter("groupid",groupid).
+                executeUpdate();
         group.setDefaultGroup((null == dflt ? false : true));
-        entityManager.persist(group);
+        entityManager.merge(group);
         entityManager.getTransaction().commit();
         entityManager.close();
         return "Success. Return to " + ADMIN_PAGE_LINK;
