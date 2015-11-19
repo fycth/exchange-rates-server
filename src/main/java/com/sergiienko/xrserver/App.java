@@ -1,7 +1,5 @@
 package com.sergiienko.xrserver;
 
-import com.sergiienko.xrserver.abstracts.RatesParser;
-import com.sergiienko.xrserver.parsers.FixerParser;
 import com.sergiienko.xrserver.workers.Worker;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.ServerConnector;
@@ -49,7 +47,6 @@ public class App {
         // configure jetty static files handler
         ResourceHandler resource_handler = new ResourceHandler();
         resource_handler.setDirectoriesListed(false);
-//        resource_handler.setWelcomeFiles(new String[]{ "index.html" });
         resource_handler.setResourceBase("src/main/webapp/static");
         ContextHandler ctx = new ContextHandler("/admin/static");
         ctx.setHandler(resource_handler);
