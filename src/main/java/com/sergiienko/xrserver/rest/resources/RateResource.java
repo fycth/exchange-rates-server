@@ -16,8 +16,9 @@ import java.util.*;
 
 @Path("/rates")
 public class RateResource {
-    EntityManager entityManager = EMF.entityManagerFactory.createEntityManager();
-    Logger logger = LoggerFactory.getLogger(RateResource.class);
+    private EntityManager entityManager = EMF.entityManagerFactory.createEntityManager();
+    private Logger logger = LoggerFactory.getLogger(RateResource.class);
+    private DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
 
     /*
     Get all rates for current hour for all sources
@@ -46,10 +47,18 @@ public class RateResource {
     // /rest/current/{source} -> all rates for current hour for specific source
     @Path("/source/{source}")
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<ResRate> listCurrentRates(@PathParam("source") Integer sourceID, @QueryParam("from") String from, @QueryParam("to") String to) {
-        List<ResRate> results = getRatesForSourceID(sourceID,from,to);
-        return results;
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public String listCurrentRates(@HeaderParam("accept") String accepts, @PathParam("source") Integer sourceID,
+                                   @QueryParam("from") String from, @QueryParam("to") String to) {
+        List<ResRate> results = getRatesForSourceID(sourceID, from, to);
+        String rates;
+        if (-1 != accepts.indexOf("xml")) {
+            rates = "<?xml version=\"1.0\"?>" + "<rates><sources><source id=\"" + sourceID + "\">" +
+                    rates2xml(results) + "</source></sources></rates>";
+        } else {
+            rates = "{\"rates\":{\"source\":" + sourceID + ",\"rates\":" + rates2json(results) + "}}";
+        }
+        return rates;
     }
 
     /*
@@ -186,15 +195,34 @@ public class RateResource {
 
     /*
     Gets list of rates
-    Returns JSON
+    Returns JSON string
      */
     private String rates2json(List<ResRate> rates) {
-        StringBuilder sb = new StringBuilder();
-        DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+        StringBuilder sb = new StringBuilder("[");
         for (ResRate rate : rates) {
+            if (sb.length() > 1) sb.append(",");
             sb.append("{\"currency\":\"" + rate.getName() + "\",\"rate\":" + rate.getRate() + ",\"timestamp\":" +
-            rate.getTime() + ",\"humantime\":" + df.format(rate.getTime()) + "}");
+            rate.getTime().getTime() + ",\"humantime\":\"" + df.format(rate.getTime()) + "\"}");
         }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    /*
+    Gets list of rates
+    Returns XML string
+     */
+    private String rates2xml(List<ResRate> rates) {
+        StringBuilder sb = new StringBuilder("<currencies>");
+        for (ResRate rate : rates) {
+            sb.append("<currency>");
+            sb.append("<name>" + rate.getName() + "</name>");
+            sb.append("<rate>" + rate.getRate() + "</rate>");
+            sb.append("<timestamp>" + rate.getTime().getTime() + "</timestamp>");
+            sb.append("<humantime>" + df.format(rate.getTime()) + "</humantime>");
+            sb.append("</currency>");
+        }
+        sb.append("</currencies>");
         return sb.toString();
     }
 }

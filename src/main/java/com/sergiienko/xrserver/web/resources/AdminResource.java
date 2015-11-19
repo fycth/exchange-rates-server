@@ -198,13 +198,4 @@ public class AdminResource {
         entityManager.close();
         return "Success. Return to " + ADMIN_PAGE_LINK;
     }
-
-    // temp test
-    @GET
-    @Path("/tets")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public String test(@HeaderParam("accept") String accepts) {
-        if (-1 != accepts.indexOf("xml")) return "<xml>addUser is called, accepts : " + accepts + "</xml>";
-        return "{response: [\"a\":123,\"accepts\":" + accepts + "]}";
-    }
 }
