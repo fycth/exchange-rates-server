@@ -25,6 +25,9 @@ public class AdminResource {
     EntityManager entityManager = EMF.entityManagerFactory.createEntityManager();
 //    Logger logger = LoggerFactory.getLogger(AdminResource.class);
 
+    /*
+    Default admin web page
+     */
     @GET
     @Produces(MediaType.TEXT_HTML)
     public String main() {
@@ -90,7 +93,9 @@ public class AdminResource {
                 footer;
     }
 
-    // shows group edit web page
+    /*
+    Show group edit page
+     */
     @GET
     @Path("/groups/{groupid}")
     @Produces(MediaType.TEXT_HTML)
@@ -117,7 +122,9 @@ public class AdminResource {
         return sb.toString();
     }
 
-    // saves group model after edit
+    /*
+    Persist group after edit
+     */
     @POST
     @Path("/groups/{groupid}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -141,7 +148,9 @@ public class AdminResource {
         return "Success. Return to " + ADMIN_PAGE_LINK;
     }
 
-    // creates new source
+    /*
+    Create new source
+     */
     @POST
     @Path("/sources/new")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -165,7 +174,9 @@ public class AdminResource {
         return "Success. Return to " + ADMIN_PAGE_LINK;
     }
 
-    // creates new group
+    /*
+    Create new group
+     */
     @POST
     @Path("/groups/new")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
