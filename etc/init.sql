@@ -2,7 +2,7 @@
 -- CREATE USER xrserver WITH PASSWORD 'xrserver';
 -- GRANT ALL PRIVILEGES ON DATABASE "xrserver" to xrserver;
 
-CREATE TABLE IF NOT EXISTS rates (id SERIAL, name varchar, rate double precision, source smallint, time timestamp);
+CREATE TABLE IF NOT EXISTS rates (id BIGSERIAL, name varchar, rate double precision, source smallint, time timestamp);
 CREATE INDEX source ON rates (source);
 
 CREATE TABLE IF NOT EXISTS sources (id SERIAL, name varchar, url varchar, descr varchar, parser_class_name varchar, enabled boolean);

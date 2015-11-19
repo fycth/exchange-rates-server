@@ -66,9 +66,9 @@ public class App {
                 .newTrigger()
                 .withIdentity("RatesWorkerTrigger", "worker_group_1")
                 .withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInHours(1).repeatForever()).build();
-//        Scheduler scheduler = new StdSchedulerFactory().getScheduler();
-//        scheduler.start();
-//        scheduler.scheduleJob(jobA, trigger1);
+        Scheduler scheduler = new StdSchedulerFactory().getScheduler();
+        scheduler.start();
+        scheduler.scheduleJob(jobA, trigger1);
 
         try {
             jettyServer.start();

@@ -8,7 +8,7 @@ import javax.persistence.*;
 public class RateModel {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
-    public Integer id;
+    public Long id;
 
     @Column(name = "name")
     public String name;
@@ -31,11 +31,11 @@ public class RateModel {
         this.time = new Date();
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
