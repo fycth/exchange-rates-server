@@ -136,8 +136,7 @@ public class RateResource {
                 logger.error("Unable to parse '" + from + "' from-string. Will use current hour. Exception is: " + e);
             }
         }
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.MINUTE, 0);
+        Calendar calendar = GregorianCalendar.getInstance();
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         calendar.set(Calendar.MINUTE, 0);
@@ -160,8 +159,7 @@ public class RateResource {
                 logger.error("Unable to parse '" + to + "' to-string. Will use current hour. Exception is:  " + e);
             }
         }
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.MINUTE, 0);
+        Calendar calendar = GregorianCalendar.getInstance();
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         calendar.set(Calendar.MINUTE, 59);
