@@ -147,6 +147,7 @@ public class RateResource {
             }
         }
         Calendar calendar = GregorianCalendar.getInstance();
+        calendar.add(Calendar.HOUR, -1); // take previous hour as well - parser might be starting in the middle of the hour
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         calendar.set(Calendar.MINUTE, 0);
