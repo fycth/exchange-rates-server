@@ -28,15 +28,17 @@ public class RateResource {
     // /rest/current ->
     @Path("/current")
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<Integer, List<ResRate>> listCurrentRates(@QueryParam("from") String from, @QueryParam("to") String to) {
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public String listCurrentRates(@HeaderParam("accept") String accepts,
+                                   @QueryParam("from") String from, @QueryParam("to") String to) {
         List<ResRate> results = getRatesForSourceID(null,from,to);
         Map<Integer, List<ResRate>> m = new HashMap<>();
         for (ResRate r : results) {
             if (null == m.get(r.getSource())) m.put(r.getSource(), new ArrayList<ResRate>());
             m.get(r.getSource()).add(r);
         }
-        return m;
+        if (-1 != accepts.indexOf("xml")) return rates2xml(m);
+        else return rates2json(m);
     }
 
     /*
@@ -50,15 +52,11 @@ public class RateResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public String listCurrentRates(@HeaderParam("accept") String accepts, @PathParam("source") Integer sourceID,
                                    @QueryParam("from") String from, @QueryParam("to") String to) {
-        List<ResRate> results = getRatesForSourceID(sourceID, from, to);
-        String rates;
-        if (-1 != accepts.indexOf("xml")) {
-            rates = "<?xml version=\"1.0\"?>" + "<rates><sources><source id=\"" + sourceID + "\">" +
-                    rates2xml(results) + "</source></sources></rates>";
-        } else {
-            rates = "{\"rates\":{\"source\":" + sourceID + ",\"rates\":" + rates2json(results) + "}}";
-        }
-        return rates;
+        List<ResRate> rates = getRatesForSourceID(sourceID, from, to);
+        Map<Integer, List<ResRate>> m = new HashMap<>();
+        m.put(sourceID,rates);
+        if (-1 != accepts.indexOf("xml")) return rates2xml(m);
+        else return rates2json(m);
     }
 
     /*
@@ -86,18 +84,17 @@ public class RateResource {
     // /rest/rates/group/{groupid}
     @Path("/group/{groupid}")
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<List<ResRate>> listGroupRates(@PathParam("groupid") Integer groupid, @QueryParam("from") String from, @QueryParam("to") String to) {
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public String listGroupRates(@HeaderParam("accept") String accepts,
+                                              @PathParam("groupid") Integer groupid,
+                                              @QueryParam("from") String from, @QueryParam("to") String to) {
         entityManager.getTransaction().begin();
         GroupModel group = entityManager.createQuery("from GroupModel where id=:arg1", GroupModel.class).
                 setParameter("arg1", groupid).getSingleResult();
         entityManager.getTransaction().commit();
-        List<List<ResRate>> results = new ArrayList<>();
-        for (Integer sourceID : group.getSources()) {
-            List<ResRate> rates = getRatesForSourceID(sourceID,from,to);
-            results.add(rates);
-        }
-        return results;
+        Map<Integer, List<ResRate>> rates = getRateForGroup(group,from,to);
+        if (-1 != accepts.indexOf("xml")) return rates2xml(rates);
+        return rates2json(rates);
     }
 
     /*
@@ -108,18 +105,31 @@ public class RateResource {
     // /rest/rates/group
     @Path("/group")
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<List<ResRate>> listDefGroupRates(@QueryParam("from") String from, @QueryParam("to") String to) {
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public String listDefGroupRates(@HeaderParam("accept") String accepts,
+                                                 @QueryParam("from") String from, @QueryParam("to") String to) {
         entityManager.getTransaction().begin();
         GroupModel group = entityManager.createQuery("from GroupModel where dflt=true", GroupModel.class).getSingleResult();
         entityManager.getTransaction().commit();
-        List<List<ResRate>> results = new ArrayList<>();
+        Map<Integer, List<ResRate>> rates = getRateForGroup(group,from,to);
+        if (-1 != accepts.indexOf("xml")) return rates2xml(rates);
+        return rates2json(rates);
+    }
+
+    /*
+    Get rates per specific group
+     */
+    private Map<Integer, List<ResRate>> getRateForGroup(GroupModel group, String from, String to) {
+        Map<Integer, List<ResRate>> m = new HashMap<>();
         for (Integer sourceID : group.getSources()) {
-            List<ResRate> rates = getRatesForSourceID(sourceID, from, to);
-            results.add(rates);
+            List<ResRate> rates = getRatesForSourceID(sourceID,from,to);
+            for (ResRate r : rates) {
+                if (null == m.get(r.getSource())) m.put(r.getSource(), new ArrayList<ResRate>());
+                m.get(r.getSource()).add(r);
+            }
         }
-        return results;
-    };
+        return m;
+    }
 
     /*
     Gets time in a yyyyMMdd[HHmm] format, rounds it up to the beginning of the hour
@@ -193,34 +203,45 @@ public class RateResource {
 
     /*
     Gets list of rates
-    Returns JSON string
+    Returns XML string
      */
-    private String rates2json(List<ResRate> rates) {
-        StringBuilder sb = new StringBuilder("[");
-        for (ResRate rate : rates) {
-            if (sb.length() > 1) sb.append(",");
-            sb.append("{\"currency\":\"" + rate.getName() + "\",\"rate\":" + rate.getRate() + ",\"timestamp\":" +
-            rate.getTime().getTime() + ",\"humantime\":\"" + df.format(rate.getTime()) + "\"}");
+    private String rates2xml(Map<Integer, List<ResRate>> rates) {
+        StringBuilder res = new StringBuilder("<?xml version=\"1.0\"?><rates><sources>");
+        for (Map.Entry<Integer,List<ResRate>> entry : rates.entrySet()) {
+            res.append("<source id=\"" + entry.getKey() + "\"><currencies>");
+            for (ResRate rate : entry.getValue()) {
+                res.append("<currency>");
+                res.append("<name>" + rate.getName() + "</name>");
+                res.append("<rate>" + rate.getRate() + "</rate>");
+                res.append("<timestamp>" + rate.getTime().getTime() + "</timestamp>");
+                res.append("<humantime>" + df.format(rate.getTime()) + "</humantime>");
+                res.append("</currency>");
+            }
+            res.append("</currencies></source>");
         }
-        sb.append("]");
-        return sb.toString();
+        res.append("</sources></rates>");
+        return res.toString();
     }
 
     /*
-    Gets list of rates
-    Returns XML string
-     */
-    private String rates2xml(List<ResRate> rates) {
-        StringBuilder sb = new StringBuilder("<currencies>");
-        for (ResRate rate : rates) {
-            sb.append("<currency>");
-            sb.append("<name>" + rate.getName() + "</name>");
-            sb.append("<rate>" + rate.getRate() + "</rate>");
-            sb.append("<timestamp>" + rate.getTime().getTime() + "</timestamp>");
-            sb.append("<humantime>" + df.format(rate.getTime()) + "</humantime>");
-            sb.append("</currency>");
+   Gets list of rates
+   Returns JSON string
+    */
+    private String rates2json(Map<Integer, List<ResRate>> rates) {
+        StringBuilder res = new StringBuilder("{\"rates\": {\"sources\": {");
+        int j = 0;
+        for (Map.Entry<Integer,List<ResRate>> entry : rates.entrySet()) {
+            if (j > 0) res.append(","); else j++;
+            res.append("\"" + entry.getKey() + "\":[");
+            int i = 0;
+            for (ResRate rate : entry.getValue()) {
+                if (i > 0) res.append(","); else i++;
+                res.append("\"" + rate.getName() + "\":{\"rate\":" + rate.getRate() + ",\"timestamp\":" +
+                        rate.getTime().getTime() + ",\"humantime\":\"" + df.format(rate.getTime()) + "\"}");
+            }
+            res.append("]");
         }
-        sb.append("</currencies>");
-        return sb.toString();
+        res.append("}}}");
+        return res.toString();
     }
 }
