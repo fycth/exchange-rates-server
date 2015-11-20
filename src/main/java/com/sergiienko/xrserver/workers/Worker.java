@@ -1,5 +1,6 @@
 package com.sergiienko.xrserver.workers;
 
+import com.sergiienko.xrserver.AppState;
 import com.sergiienko.xrserver.EMF;
 import com.sergiienko.xrserver.abstracts.RatesParser;
 import com.sergiienko.xrserver.models.SourceModel;
@@ -20,6 +21,7 @@ public class Worker implements Job {
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
+            AppState.clearState();
             entityManager.getTransaction().begin();
             Query q = entityManager.createQuery("from SourceModel where enabled = :arg1", SourceModel.class);
             q.setParameter("arg1",true);
@@ -30,7 +32,7 @@ public class Worker implements Job {
                 try {
                     Class<?> parser_class = Class.forName(source.getParserClassName());
                     Constructor<?> constructor = parser_class.getConstructor();
-                    RatesParser parser_instance = (RatesParser)constructor.newInstance();
+                    RatesParser parser_instance = (RatesParser) constructor.newInstance();
                     parser_instance.run(source.url, source.getId());
                 } catch (Exception e) {
                     logger.error("Can't update rates for source " + source.getId() + ", parser exception: " + e);

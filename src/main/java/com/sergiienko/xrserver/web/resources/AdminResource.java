@@ -1,5 +1,6 @@
 package com.sergiienko.xrserver.web.resources;
 
+import com.sergiienko.xrserver.AppState;
 import com.sergiienko.xrserver.EMF;
 import com.sergiienko.xrserver.abstracts.RatesParser;
 import com.sergiienko.xrserver.models.GroupModel;
@@ -300,5 +301,39 @@ public class AdminResource {
         entityManager.getTransaction().commit();
         logger.info("New group added: " + name);
         return "Success. Return to " + ADMIN_PAGE_LINK;
+    }
+
+    /*
+    Get application state
+    */
+    @GET
+    @Path("/rest/state")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getState() {
+        StringBuilder sb = new StringBuilder("{state: {sources: {");
+        Map<Integer,Boolean> state = AppState.getState();
+        int i = 0;
+        for (Map.Entry<Integer,Boolean> entry : state.entrySet()) {
+            if (i > 0) sb.append(","); else i++;
+            sb.append("\"" + entry.getKey() + "\":" + (entry.getValue() ? "\"OK\"" : "\"ERROR\""));
+        }
+        sb.append("}}}");
+        return sb.toString();
+    }
+
+    /*
+    Get state for specific source
+    */
+    @GET
+    @Path("/rest/state/{sourceid}")
+    @Produces(MediaType.TEXT_HTML)
+    public String getStateID(@PathParam("sourceid") Integer sourceid) {
+        StringBuilder sb = new StringBuilder("<html><body>");
+        Map<Integer,Boolean> state = AppState.getState();
+        Boolean sourceState = state.get(sourceid);
+        if (null == sourceState) sb.append("NO STATE");
+        else sb.append(sourceState ? "OK" : "ERROR");
+        sb.append("</body></html>");
+        return sb.toString();
     }
 }

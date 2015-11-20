@@ -1,9 +1,12 @@
 package com.sergiienko.xrserver.abstracts;
 
+import com.sergiienko.xrserver.AppState;
 import com.sergiienko.xrserver.EMF;
 import com.sergiienko.xrserver.models.RateModel;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
 import java.io.BufferedReader;
@@ -15,6 +18,7 @@ import java.nio.charset.Charset;
 
 public abstract class RatesParser {
     protected EntityManager em = EMF.entityManagerFactory.createEntityManager();
+    Logger logger = LoggerFactory.getLogger(RatesParser.class);
     protected Integer sourceID;
     protected String url;
 
@@ -24,7 +28,13 @@ public abstract class RatesParser {
         this.sourceID = sourceID;
         this.url = url;
         em.getTransaction().begin();
-        parse();
+        try {
+            parse();
+            AppState.updateState(sourceID,true);
+        } catch (Exception e) {
+            logger.error("Parser for source " + sourceID + " failed: " + e);
+            AppState.updateState(sourceID,false);
+        }
         em.getTransaction().commit();
         em.close();
     }
@@ -50,5 +60,5 @@ public abstract class RatesParser {
         em.persist(new RateModel(currency, rate, sourceID));
     }
 
-    protected abstract void parse();
+    protected abstract void parse() throws Exception;
 }
