@@ -44,6 +44,7 @@ public class TestBasic {
     public void getTmin() throws ClassNotFoundException, IllegalAccessException,
             InstantiationException, NoSuchMethodException, InvocationTargetException, ParseException {
         Calendar calendar = GregorianCalendar.getInstance();
+        calendar.add(Calendar.HOUR, -1);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         calendar.set(Calendar.MINUTE, 00);
