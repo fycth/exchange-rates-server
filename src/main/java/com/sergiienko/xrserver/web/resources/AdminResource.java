@@ -3,6 +3,7 @@ package com.sergiienko.xrserver.web.resources;
 import com.sergiienko.xrserver.EMF;
 import com.sergiienko.xrserver.abstracts.RatesParser;
 import com.sergiienko.xrserver.models.GroupModel;
+import com.sergiienko.xrserver.models.RateModel;
 import com.sergiienko.xrserver.models.SourceModel;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ public class AdminResource {
     private static final String footer = "</body></html>";
 
     EntityManager entityManager = EMF.entityManagerFactory.createEntityManager();
-//    Logger logger = LoggerFactory.getLogger(AdminResource.class);
+    Logger logger = LoggerFactory.getLogger(AdminResource.class);
 
     /*
     Default admin web page
@@ -35,7 +36,6 @@ public class AdminResource {
         List<SourceModel> sources = entityManager.createQuery("from SourceModel", SourceModel.class).getResultList();
         List<GroupModel> groups = entityManager.createQuery("from GroupModel", GroupModel.class).getResultList();
         entityManager.getTransaction().commit();
-        entityManager.close();
 
         StringBuilder strSources = new StringBuilder();
         for (SourceModel source : sources) {
@@ -58,20 +58,11 @@ public class AdminResource {
                     "</td></tr>");
         }
 
-        StringBuilder parsers = new StringBuilder("<select name=\"parserclass\">");
-        Reflections reflections = new Reflections("com.sergiienko.xrserver.parsers");
-        Set<Class<? extends RatesParser>> allClasses = reflections.getSubTypesOf(RatesParser.class);
-        for (Class c : allClasses) {
-            String className = c.getName();
-            parsers.append("<option value=\"" + className + "\">" + className + "</option>");
-        }
-        parsers.append("</select>");
-
         String newSources = "<form action=\"sources/new\" method=\"post\">" +
                 "<input type=\"text\" placeholder=\"Name\" name=\"name\">" +
                 "<input type=\"text\" placeholder=\"URL\" name=\"url\">" +
                 "<input type=\"text\" placeholder=\"Description\" name=\"descr\">" +
-                parsers +
+                getParsersHTMLClassNames() +
                 "<input type=\"submit\">" +
                 "</form>";
 
@@ -94,6 +85,21 @@ public class AdminResource {
     }
 
     /*
+    Returns known parsers' full class names in HTML string
+     */
+    private String getParsersHTMLClassNames() {
+        StringBuilder parsers = new StringBuilder("<select name=\"parserclass\" id=\"parserclass\">");
+        Reflections reflections = new Reflections("com.sergiienko.xrserver.parsers");
+        Set<Class<? extends RatesParser>> allClasses = reflections.getSubTypesOf(RatesParser.class);
+        for (Class c : allClasses) {
+            String className = c.getName();
+            parsers.append("<option value=\"" + className + "\">" + className + "</option>");
+        }
+        parsers.append("</select>");
+        return parsers.toString();
+    }
+
+    /*
     Show group edit page
      */
     @GET
@@ -107,7 +113,6 @@ public class AdminResource {
         GroupModel group = (GroupModel)q.getSingleResult();
         List<SourceModel> sources = entityManager.createQuery("from SourceModel", SourceModel.class).getResultList();
         entityManager.getTransaction().commit();
-        entityManager.close();
         sb.append("<form action=\"" + groupid + "\" method=\"post\">");
         sb.append("Name <input name=\"name\" value=\"" + group.getName() + "\"><br>");
         sb.append("Description <input name=\"descr\" value=\"" + group.getDescr() + "\"><br>");
@@ -119,6 +124,76 @@ public class AdminResource {
             sb.append("<input type=\"checkbox\" name=\"source\" " + checked + " value=\"" + source.getId() + "\">" + source.getName() + "<br>");
         }
         sb.append("<input type=\"submit\"></form>");
+        sb.append("<br><a href=\"" + groupid + "/remove\">Delete group</a></br>");
+        return sb.toString();
+    }
+
+    /*
+   Remove group from DB
+    */
+    @GET
+    @Path("/groups/{groupid}/remove")
+    @Produces(MediaType.TEXT_HTML)
+    public String RemoveGroup(@PathParam("groupid") Integer groupid) {
+        entityManager.getTransaction().begin();
+        Query q = entityManager.createQuery("delete GroupModel where id=:arg1");
+        q.setParameter("arg1",groupid);
+        q.executeUpdate();
+        entityManager.getTransaction().commit();
+        logger.info("Group " + groupid + " has been removed");
+        return "<br>Return to " + ADMIN_PAGE_LINK;
+    }
+
+    /*
+    Remove source from DB
+     */
+    @GET
+    @Path("/sources/{sourceid}/remove")
+    @Produces(MediaType.TEXT_HTML)
+    public String RemoveSource(@PathParam("sourceid") Integer sourceid) {
+        entityManager.getTransaction().begin();
+        Query q = entityManager.createQuery("from RateModel where source=:arg1", RateModel.class);
+        q.setParameter("arg1",sourceid);
+        q.setMaxResults(1);
+        List<Object> l = q.getResultList();
+        String res;
+        if (0 == l.size()) {
+            q = entityManager.createQuery("delete SourceModel where id=:arg1");
+            q.setParameter("arg1",sourceid);
+            q.executeUpdate();
+            res = "Success.";
+        } else {
+            res = "We have rates from this source in DB. Cannot be removed.";
+        }
+        entityManager.getTransaction().commit();
+        logger.info("Source " + sourceid + " has been removed");
+        return res + "<br>Return to " + ADMIN_PAGE_LINK;
+    }
+
+    /*
+    Show source edit page
+    */
+    @GET
+    @Path("/sources/{sourceid}")
+    @Produces(MediaType.TEXT_HTML)
+    public String EditSource(@PathParam("sourceid") Integer sourceid) {
+        StringBuilder sb = new StringBuilder(header);
+        entityManager.getTransaction().begin();
+        Query q = entityManager.createQuery("from SourceModel where id=:arg1", SourceModel.class);
+        q.setParameter("arg1",sourceid);
+        SourceModel source = (SourceModel)q.getSingleResult();
+        entityManager.getTransaction().commit();
+        sb.append("<form action=\"" + sourceid + "\" method=\"post\">");
+        sb.append("Name <input name=\"name\" value=\"" + source.getName() + "\"><br>");
+        sb.append("Description <input name=\"descr\" value=\"" + source.getDescr() + "\"><br>");
+        sb.append("URL <input name=\"url\" value=\"" + source.getUrl() + "\"><br>");
+        sb.append("Parser " + getParsersHTMLClassNames() + "<br>");
+        sb.append("Enabled <input type=\"checkbox\" name=\"enabled\" " + (source.getEnabled() ? "checked=\"true\"><br>" : "><br>"));
+        sb.append("Sources in group<br>");
+        sb.append("<input type=\"submit\"></form>");
+        sb.append("<br><a href=\"" + sourceid + "/remove\">Delete source</a> - can be deleted if no rates from this source are in DB</br>");
+        sb.append("<script>var el = document.getElementById(\'parserclass\');\nel.value=\"" +
+                source.getParserClassName() + "\"</script>");
         return sb.toString();
     }
 
@@ -147,7 +222,35 @@ public class AdminResource {
         group.setDefaultGroup((null == dflt ? false : true));
         entityManager.merge(group);
         entityManager.getTransaction().commit();
-        entityManager.close();
+        logger.info("Group " + groupid + "has been edited");
+        return "Success. Return to " + ADMIN_PAGE_LINK;
+    }
+
+    /*
+    Persist source after edit
+     */
+    @POST
+    @Path("/sources/{sourceid}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_HTML)
+    public String SaveSource(@PathParam("sourceid") Integer groupid,
+                            @FormParam("url") String url,
+                            @FormParam("name") String name,
+                            @FormParam("descr") String descr,
+                            @FormParam("parserclass") String parser,
+                            @FormParam("enabled") Boolean enabled) {
+        entityManager.getTransaction().begin();
+        Query q = entityManager.createQuery("from SourceModel where id=:arg1", SourceModel.class);
+        q.setParameter("arg1", groupid);
+        SourceModel source = (SourceModel)q.getSingleResult();
+        source.setParserClassName(parser);
+        source.setUrl(url);
+        source.setDescr(descr);
+        source.setName(name);
+        source.setEnabled((null == enabled ? false : true));
+        entityManager.merge(source);
+        entityManager.getTransaction().commit();
+        logger.info("Source " + groupid + "has been edited");
         return "Success. Return to " + ADMIN_PAGE_LINK;
     }
 
@@ -173,7 +276,7 @@ public class AdminResource {
         entityManager.getTransaction().begin();
         entityManager.persist(newsource);
         entityManager.getTransaction().commit();
-        entityManager.close();
+        logger.info("New source added: " + url);
         return "Success. Return to " + ADMIN_PAGE_LINK;
     }
 
@@ -195,7 +298,7 @@ public class AdminResource {
         entityManager.getTransaction().begin();
         entityManager.persist(newgroup);
         entityManager.getTransaction().commit();
-        entityManager.close();
+        logger.info("New group added: " + name);
         return "Success. Return to " + ADMIN_PAGE_LINK;
     }
 }
