@@ -22,6 +22,7 @@
         <reflectionsVersion>0.9.10</reflectionsVersion>
         <orgJSONVersion>20150729</orgJSONVersion>
         <c3poVersion>0.9.5.1</c3poVersion>
+        <findBugsVersion>3.0.2</findBugsVersion>
     </properties>
 
     <dependencies>
@@ -118,6 +119,19 @@
             <version>${orgJSONVersion}</version>
         </dependency>
     </dependencies>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>${findBugsVersion}</version>
+                <configuration>
+                    <onlyAnalyze>com.sergiienko.*</onlyAnalyze>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
 
     <build>
         <finalName>xr-rest-server</finalName>
