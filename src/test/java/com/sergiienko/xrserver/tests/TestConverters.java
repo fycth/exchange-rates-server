@@ -6,7 +6,6 @@ import org.junit.Test;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
-
 import static org.junit.Assert.assertEquals;
 
 /*
