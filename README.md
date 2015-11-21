@@ -9,3 +9,18 @@ Compile and start ```mvn clean install exec:java```
 
 Get last rates from all sources ```/rest/rates/current```
 
+Get rates for the certain source ```/rest/rates/source/1```
+
+Get rates for the certain group ```/rest/rates/group/2```
+
+Get rates for the default group ```/rest/rates/group```
+
+Put exchange rate data manually ```/rest/rates/put/USD/1.5```
+
+Get rates for certain time limit
+```
+    /rest/rates/current?from=20150101
+    /rest/rates/group?from=201501012012
+    /rest/rates/source/2?from=20150101&to=20151012
+```
+
