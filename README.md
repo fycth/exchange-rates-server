@@ -6,10 +6,12 @@ It can gather rates data from a set of sources (ECB, Yahoo Finance, etc.) and st
 The stored rates data can be requested via REST API.
 
 Compile and start
+
 ```mvn clean install exec:java
 ```
 
 Get last rates from all sources
+
 ```/rest/rates/current
 ```
 
