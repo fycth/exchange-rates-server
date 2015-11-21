@@ -11,3 +11,6 @@ INSERT INTO sources (name,url,descr,parser_class_name,enabled) VALUES ('Fixer','
 
 CREATE TABLE IF NOT EXISTS groups (id SERIAL, name varchar, descr varchar, sources integer[], dflt boolean);
 INSERT INTO groups (name,descr,sources,dflt) VALUES ('default','default group',array[1],TRUE);
+
+CREATE TABLE IF NOT EXISTS currency_groups (id SERIAL, name varchar, descr varchar, currencies text[], sources integer[], dflt boolean);
+INSERT INTO currency_groups (name,descr,currencies,sources,dflt) VALUES ('default','default currency group',array['USD','NOK'],array[1,2],true);

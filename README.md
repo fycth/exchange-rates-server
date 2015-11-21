@@ -22,6 +22,14 @@ Get rates for the certain group: ```/rest/rates/group/2```
 
 Get rates for the default group: ```/rest/rates/group```
 
+Get rates for specific currency group: ```/rest/rates/currencygroup/2/```
+
+Get rates for default currency group: ```/rest/rates/currencygroup```
+
+Get legacy XML for default currency group: ```/rest/rates/currencygroup?legacy=true```
+
+Get legacy XML for specific source: ```/rest/rates/source/3?legacy=true```
+
 Put exchange rate data manually: ```/rest/rates/put/USD/1.5```
 
 Get rates for certain time limit:

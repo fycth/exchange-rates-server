@@ -3,9 +3,12 @@ package com.sergiienko.xrserver.web.resources;
 import com.sergiienko.xrserver.AppState;
 import com.sergiienko.xrserver.EMF;
 import com.sergiienko.xrserver.abstracts.RatesParser;
+import com.sergiienko.xrserver.models.CurrencyGroupModel;
 import com.sergiienko.xrserver.models.GroupModel;
 import com.sergiienko.xrserver.models.RateModel;
 import com.sergiienko.xrserver.models.SourceModel;
+import com.sergiienko.xrserver.rest.resources.RateResource;
+import com.sergiienko.xrserver.rest.resources.ResRate;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,10 +22,12 @@ import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.HashMap;
 
 /**
  * Serves admin related REST API and HTML pages
@@ -66,6 +71,7 @@ public class AdminResource {
         entityManager.getTransaction().begin();
         List<SourceModel> sources = entityManager.createQuery("from SourceModel", SourceModel.class).getResultList();
         List<GroupModel> groups = entityManager.createQuery("from GroupModel", GroupModel.class).getResultList();
+        List<CurrencyGroupModel> currencyGroups = entityManager.createQuery("from CurrencyGroupModel", CurrencyGroupModel.class).getResultList();
         entityManager.getTransaction().commit();
 
         StringBuilder strSources = new StringBuilder();
@@ -89,6 +95,16 @@ public class AdminResource {
                     + "</td></tr>");
         }
 
+        StringBuilder strCurrencyGroups = new StringBuilder();
+        for (CurrencyGroupModel currencyGroup : currencyGroups) {
+            strCurrencyGroups.append("<tr><td><a href=\"currencygroups/" + currencyGroup.getId() + "\">"
+                    + currencyGroup.getId() + "</a>"
+                    + "</td><td>" + currencyGroup.getName()
+                    + "</td><td>" + currencyGroup.getDescr()
+                    + "</td><td>" + currencyGroup.getDefaultGroup()
+                    + "</td></tr>");
+        }
+
         String newSources = "<form action=\"sources/new\" method=\"post\">"
                 + "<input type=\"text\" placeholder=\"Name\" name=\"name\">"
                 + "<input type=\"text\" placeholder=\"URL\" name=\"url\">"
@@ -97,6 +113,11 @@ public class AdminResource {
                 + "<input type=\"submit\"></form>";
 
         String newGroup = "<form action=\"groups/new\" method=\"post\">"
+                + "<input type=\"text\" placeholder=\"Name\" name=\"name\">"
+                + "<input type=\"text\" placeholder=\"Description\" name=\"descr\">"
+                + "<input type=\"submit\"></form>";
+
+        String newCurrencyGroup = "<form action=\"currencygroups/new\" method=\"post\">"
                 + "<input type=\"text\" placeholder=\"Name\" name=\"name\">"
                 + "<input type=\"text\" placeholder=\"Description\" name=\"descr\">"
                 + "<input type=\"submit\"></form>";
@@ -110,7 +131,14 @@ public class AdminResource {
                 + "<h3>Groups</h3><table style=\"width:100%\"><tr><th>ID</th><th>Name</th><th>Description</th><th>Sources</th><th>Default</th></tr>"
                 + strGroups + "</table><br><hr><br>"
                 + "<h3>Add new group</h3><strong>all fields are mandatory</strong>"
-                + newGroup + FOOTER;
+                + newGroup
+                + "<br><hr><br>"
+                + "<h3>Currency Groups</h3><table style=\"width:100%\"><tr><th>ID</th><th>Name</th><th>Description</th><th>Default</th></tr>"
+                + strCurrencyGroups
+                + "</table><br><hr><br>"
+                + "<h3>Add new currency group</h3><strong>all fields are mandatory</strong>"
+                + newCurrencyGroup + "<br><hr><br>"
+                + FOOTER;
     }
 
     /**
@@ -410,5 +438,149 @@ public class AdminResource {
         }
         sb.append("</body></html>");
         return sb.toString();
+    }
+
+    /**
+     Show currency group edit page
+     @param groupid ID of the currency group
+     @return a web page for editing the group's properties
+     */
+    @GET
+    @Path("/currencygroups/{groupid}")
+    @Produces(MediaType.TEXT_HTML)
+    public final String editCurrencyGroup(@PathParam("groupid") final Integer groupid) {
+        StringBuilder sb = new StringBuilder(HEADER);
+        entityManager.getTransaction().begin();
+        Query q = entityManager.createQuery("from CurrencyGroupModel where id=:arg1", CurrencyGroupModel.class);
+        q.setParameter("arg1", groupid);
+        CurrencyGroupModel group = (CurrencyGroupModel) q.getSingleResult();
+        entityManager.getTransaction().commit();
+        sb.append("<form action=\"" + groupid + "\" method=\"post\">");
+        sb.append("Name <input name=\"name\" value=\"" + group.getName() + "\"><br>");
+        sb.append("Description <input name=\"descr\" value=\"" + group.getDescr() + "\"><br>");
+        sb.append("Default group <input type=\"checkbox\" name=\"default\" " + (group.getDefaultGroup() ? "checked=\"true\"><br>" : "><br>"));
+        sb.append("Sources in group<br>");
+        Integer[] groupSources = group.getSources();
+        String[] groupCurrencies = group.getCurrencies();
+        RateResource rateRes = new RateResource();
+        List<ResRate> ratesList = rateRes.getRatesForSourceID(null, null, null);
+        Map<Integer, List<ResRate>> ratesMap = new HashMap<>();
+        for (ResRate r : ratesList) {
+            if (null == ratesMap.get(r.getSource())) {
+                ratesMap.put(r.getSource(), new ArrayList<ResRate>());
+            }
+            ratesMap.get(r.getSource()).add(r);
+        }
+        sb.append("<table><tr><th></th><th>Source ID</th><th>Currency name</th></tr>");
+        for (Map.Entry<Integer, List<ResRate>> entry : ratesMap.entrySet()) {
+            Integer sourceID = entry.getKey();
+            for (ResRate rate : entry.getValue()) {
+                String currencyName = rate.getName();
+                String checked = "";
+                for (int i = 0; i < groupSources.length; i++) {
+                    if (groupSources[i].equals(sourceID) && currencyName.equals(groupCurrencies[i])) {
+                        checked = " checked=\"true\" ";
+                        break;
+                    }
+                }
+                String checkboxValue = sourceID + ":" + currencyName;
+                sb.append("<tr><td><input type=\"checkbox\" name=\"source\" " + checked + " value=\"" + checkboxValue + "\"></td>"
+                        + "<td>" + sourceID + "</td><td>" + currencyName + "</td></tr>");
+            }
+        }
+        sb.append("</table><input type=\"submit\"></form>");
+        sb.append("<br><a href=\"" + groupid + "/remove\">Delete group</a></br>");
+        return sb.toString();
+    }
+
+    /**
+     Persist currency group after edit
+     @param name         name of the group
+     @param descr        description of the group
+     @param dflt         is the group default
+     @param groupid      ID of the group
+     @param sources      list of pairs 'source:value' arranged in this group
+     @return             a link on the admin web page
+     */
+    @POST
+    @Path("/currencygroups/{groupid}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_HTML)
+    public final String saveCurrencyGroup(@PathParam("groupid") final Integer groupid,
+                                  @FormParam("source") final List<String> sources,
+                                  @FormParam("name") final String name,
+                                  @FormParam("descr") final String descr,
+                                  @FormParam("default") final Boolean dflt) {
+        entityManager.getTransaction().begin();
+        Query q = entityManager.createQuery("from CurrencyGroupModel where id=:arg1", CurrencyGroupModel.class);
+        q.setParameter("arg1", groupid);
+        CurrencyGroupModel group = (CurrencyGroupModel) q.getSingleResult();
+        List<Integer> formSources = new ArrayList<>();
+        List<String> formCurrencies = new ArrayList<>();
+        for (String s : sources) {
+            String[] parts = s.split(":");
+            formSources.add(Integer.parseInt(parts[0]));
+            formCurrencies.add(parts[1]);
+        }
+        group.setSources(formSources.toArray(new Integer[formSources.size()]));
+        group.setCurrencies(formCurrencies.toArray(new String[formCurrencies.size()]));
+        group.setDescr(descr);
+        group.setName(name);
+        if (null != dflt) {
+            entityManager.createQuery("UPDATE CurrencyGroupModel SET dflt=:state WHERE id<>:groupid").
+                    setParameter("state", false).setParameter("groupid", groupid).
+                    executeUpdate();
+        }
+        group.setDefaultGroup(null == dflt ? false : true);
+        entityManager.merge(group);
+        entityManager.getTransaction().commit();
+        logger.info("Currency group " + groupid + "has been edited");
+        return "Success. Return to " + ADMIN_PAGE_LINK;
+    }
+
+    /**
+     Remove currency group from DB
+     @param groupid ID of the group
+     @return a link on the admin web page
+     */
+    @GET
+    @Path("/currencygroups/{groupid}/remove")
+    @Produces(MediaType.TEXT_HTML)
+    public final String removeCurrencyGroup(@PathParam("groupid") final Integer groupid) {
+        entityManager.getTransaction().begin();
+        Query q = entityManager.createQuery("delete CurrencyGroupModel where id=:arg1");
+        q.setParameter("arg1", groupid);
+        q.executeUpdate();
+        entityManager.getTransaction().commit();
+        logger.info("Currency group " + groupid + " has been removed");
+        return "<br>Return to " + ADMIN_PAGE_LINK;
+    }
+
+    /**
+     Create empty currency group
+     @param name name of the group
+     @param descr description of the group
+     @return a link to the main admin page
+     */
+    @POST
+    @Path("/currencygroups/new")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_HTML)
+    public final String createCurrencyGroup(@FormParam("name") final String name,
+                                            @FormParam("descr") final String descr) {
+        if (null == name || 0 == name.length() || null == descr || 0 == descr.length()) {
+            return "All form fields are mandatory. Return to " + ADMIN_PAGE_LINK;
+        }
+        CurrencyGroupModel newgroup = new CurrencyGroupModel();
+        newgroup.setName(name);
+        newgroup.setDescr(descr);
+        newgroup.setDefaultGroup(false);
+        newgroup.setSources(new Integer[]{});
+        newgroup.setCurrencies(new String[]{});
+        entityManager.getTransaction().begin();
+        entityManager.persist(newgroup);
+        entityManager.getTransaction().commit();
+        logger.info("New currency group added: " + name);
+        return "Success. Return to " + ADMIN_PAGE_LINK;
     }
 }

@@ -7,5 +7,6 @@
         <class>com.sergiienko.xrserver.models.RateModel</class>
         <class>com.sergiienko.xrserver.models.GroupModel</class>
         <class>com.sergiienko.xrserver.models.SourceModel</class>
+        <class>com.sergiienko.xrserver.models.CurrencyGroupModel</class>
     </persistence-unit>
 </persistence>

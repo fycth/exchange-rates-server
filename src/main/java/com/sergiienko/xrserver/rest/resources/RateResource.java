@@ -1,6 +1,7 @@
 package com.sergiienko.xrserver.rest.resources;
 
 import com.sergiienko.xrserver.EMF;
+import com.sergiienko.xrserver.models.CurrencyGroupModel;
 import com.sergiienko.xrserver.models.GroupModel;
 import com.sergiienko.xrserver.models.RateModel;
 import org.slf4j.Logger;
@@ -191,8 +192,97 @@ public class RateResource {
     }
 
     /**
+     * Get all rates for the current hour for the specified {groupID} currency group
+     * If 'from' or/and 'to' parameters are passed, return data for the given time limit
+     * from/to parameters be like 'yyyyMMdd[HHmm]'
+     * REST /rest/rates/group/{groupid}
+     * @param accepts list of media types accepted by client
+     * @param groupid group ID
+     * @param from from time point
+     * @param to to time point
+     * @param legacy if not null, return legacy XML (like ECB XML feed)
+     * @return string of rates in appropriate format (JSON/XML)
+     */
+    @Path("/currencygroup/{groupid}")
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public final String getCurrencyGroupRates(@HeaderParam("accept") final String accepts,
+                                       @PathParam("groupid") final Integer groupid,
+                                       @QueryParam("from") final String from, @QueryParam("to") final String to,
+                                       @QueryParam("legacy") final String legacy) {
+        entityManager.getTransaction().begin();
+        CurrencyGroupModel group = entityManager.createQuery("from CurrencyGroupModel where id=:arg1", CurrencyGroupModel.class).
+                setParameter("arg1", groupid).getSingleResult();
+        entityManager.getTransaction().commit();
+        List<ResRate> rates = getRateForCurrencyGroup(group, from, to);
+        if (null != legacy) {
+            return rates2legacyXML(rates);
+        }
+        if (-1 != accepts.indexOf("xml")) {
+            return rates2xml(rates);
+        } else {
+            return rates2json(rates);
+        }
+    }
+
+    /**
+     * Get all rates for the current hour for the default currency group
+     * If 'from' or/and 'to' parameters are passed, return data for the given time limit
+     * from/to parameters be like 'yyyyMMdd[HHmm]'
+     * REST /rest/rates/group
+     * @param accepts list of media types accepted by client
+     * @param from from time point
+     * @param to to time point
+     * @param legacy if not null, return legacy XML (like ECB XML feed)
+     * @return string of rates in appropriate format (JSON/XML)
+     */
+    @Path("/currencygroup")
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public final String getDefCurrencyGroupRates(@HeaderParam("accept") final String accepts,
+                                          @QueryParam("from") final String from,
+                                          @QueryParam("to") final String to,
+                                          @QueryParam("legacy") final String legacy) {
+        entityManager.getTransaction().begin();
+        CurrencyGroupModel group = entityManager.createQuery("from CurrencyGroupModel where dflt=true", CurrencyGroupModel.class).getSingleResult();
+        entityManager.getTransaction().commit();
+        List<ResRate> rates = getRateForCurrencyGroup(group, from, to);
+        if (null != legacy) {
+            return rates2legacyXML(rates);
+        }
+        if (-1 != accepts.indexOf("xml")) {
+            return rates2xml(rates);
+        } else {
+            return rates2json(rates);
+        }
+    }
+
+    /**
+     * Get rates for specific currency group
+     * @param group currency group object
+     * @param from from time point
+     * @param to to time point
+     * @return rates for specific group
+     */
+    private List<ResRate> getRateForCurrencyGroup(final CurrencyGroupModel group, final String from, final String to) {
+        List<ResRate> rates = new ArrayList<>();
+        String[] currencyNames = group.getCurrencies();
+        Integer[] sources = group.getSources();
+        for (int j = 0; j < sources.length; j++) {
+            List<ResRate> temprates = getRatesForSourceID(sources[j], from, to);
+            for (ResRate rate : temprates) {
+                if (rate.getName().equals(currencyNames[j])) {
+                    rates.add(rate);
+                    break;
+                }
+            }
+        }
+        return rates;
+    }
+
+    /**
      * Get rates for specific group
-     * @param group group ID
+     * @param group group object
      * @param from from time point
      * @param to to time point
      * @return rates for specific group
@@ -278,7 +368,7 @@ public class RateResource {
      * @param to to time point
      * @return list of rates
      */
-    private List<ResRate> getRatesForSourceID(final Integer sourceID, final String from, final String to) {
+    public final List<ResRate> getRatesForSourceID(final Integer sourceID, final String from, final String to) {
         Date tMin = getTimeMin(from);
         Date tMax = getTimeMax(to);
         entityManager.getTransaction().begin();
@@ -298,7 +388,7 @@ public class RateResource {
 
     /**
      * Convert rates into XML
-     * @param rates rates
+     * @param rates map of list of rates
      * @return XML string
      */
     private String rates2xml(final Map<Integer, List<ResRate>> rates) {
@@ -320,8 +410,27 @@ public class RateResource {
     }
 
     /**
+     * Convert rates into XML
+     * @param rates list of rates
+     * @return XML string
+     */
+    private String rates2xml(final List<ResRate> rates) {
+        StringBuilder res = new StringBuilder("<?xml version=\"1.0\"?><rates><currencies>");
+        for (ResRate rate : rates) {
+            res.append("<currency>");
+            res.append("<name>" + rate.getName() + "</name>");
+            res.append("<rate>" + rate.getRate() + "</rate>");
+            res.append("<timestamp>" + rate.getTime().getTime() + "</timestamp>");
+            res.append("<humantime>" + df.format(rate.getTime()) + "</humantime>");
+            res.append("</currency>");
+        }
+        res.append("</currencies></rates>");
+        return res.toString();
+    }
+
+    /**
      * Convert rates into JSON
-     * @param rates rates
+     * @param rates map of list of rates
      * @return JSON string
      */
     private String rates2json(final Map<Integer, List<ResRate>> rates) {
@@ -351,8 +460,29 @@ public class RateResource {
     }
 
     /**
+     * Convert rates into JSON
+     * @param rates list of rates
+     * @return JSON string
+     */
+    private String rates2json(final List<ResRate> rates) {
+        StringBuilder res = new StringBuilder("{\"rates\": {");
+        int i = 0;
+        for (ResRate rate : rates) {
+            if (i > 0) {
+                res.append(",");
+            } else {
+                i++;
+            }
+            res.append("\"" + rate.getName() + "\":{\"rate\":" + rate.getRate() + ",\"timestamp\":"
+                        + rate.getTime().getTime() + ",\"humantime\":\"" + df.format(rate.getTime()) + "\"}");
+        }
+        res.append("}}");
+        return res.toString();
+    }
+
+    /**
      * Convert rates into legacy XML (ECB XML feed)
-     * @param rates rates
+     * @param rates map of list of rates
      * @return legacy XML
      */
     private String rates2legacyXML(final Map<Integer, List<ResRate>> rates) {
@@ -368,6 +498,25 @@ public class RateResource {
             }
             res.append("</Cube>\n</Cube>\n</gesmes:Envelope>");
         }
+        return res.toString();
+    }
+
+    /**
+     * Convert rates into legacy XML (ECB XML feed)
+     * @param rates list of rates
+     * @return legacy XML
+     */
+    private String rates2legacyXML(final List<ResRate> rates) {
+        StringBuilder res = new StringBuilder("<gesmes:Envelope xmlns:gesmes=\"http://www.gesmes.org/xml/2002-08-01\" xmlns=\"http://www.ecb.int/vocabulary/2002-08-01/eurofxref\">\n");
+        res.append("<gesmes:subject>Reference rates</gesmes:subject>\n");
+        res.append("<gesmes:Sender>\n" + "<gesmes:name>European Central Bank</gesmes:name>\n</gesmes:Sender>");
+        Calendar calendar = GregorianCalendar.getInstance();
+        DateFormat xmldf = new SimpleDateFormat("yyyy-MM-dd");
+        res.append("<Cube>\n<Cube time=\"" + xmldf.format(calendar.getTime()) + "\">");
+        for (ResRate rate : rates) {
+            res.append("<Cube currency=\"" + rate.getName() + "\" rate=\"" + rate.getRate() + "\" />");
+        }
+        res.append("</Cube>\n</Cube>\n</gesmes:Envelope>");
         return res.toString();
     }
 }

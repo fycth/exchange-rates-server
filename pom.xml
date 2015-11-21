@@ -30,6 +30,7 @@
         <sourceJavaVersion>1.7</sourceJavaVersion>
         <compilerPluginVersion>2.5.1</compilerPluginVersion>
         <execPluginVersion>1.4.0</execPluginVersion>
+        <JXRPluginVersion>2.5</JXRPluginVersion>
         <checkstyle.config.location>etc/checkstyle.xml</checkstyle.config.location>
     </properties>
 
@@ -147,6 +148,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${checkStylePluginVersion}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>${JXRPluginVersion}</version>
             </plugin>
         </plugins>
     </reporting>
