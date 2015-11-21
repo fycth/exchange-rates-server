@@ -47,7 +47,7 @@ public class TestBasic {
         calendar.add(Calendar.HOUR, -1);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
-        calendar.set(Calendar.MINUTE, 00);
+        calendar.set(Calendar.MINUTE, 0);
         Date now = calendar.getTime();
 
         DateFormat df = new SimpleDateFormat("yyyyMMddHHmm");
