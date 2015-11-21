@@ -33,7 +33,7 @@ public class Worker implements Job {
                     Class<?> parser_class = Class.forName(source.getParserClassName());
                     Constructor<?> constructor = parser_class.getConstructor();
                     RatesParser parser_instance = (RatesParser) constructor.newInstance();
-                    parser_instance.run(source.url, source.getId());
+                    parser_instance.run(source.getUrl(), source.getId());
                 } catch (Exception e) {
                     logger.error("Can't update rates for source " + source.getId() + ", parser exception: " + e);
                 }

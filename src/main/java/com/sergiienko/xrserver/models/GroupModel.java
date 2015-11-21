@@ -8,20 +8,20 @@ import javax.persistence.*;
 public class GroupModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Integer id;
+    private Integer id;
 
     @Column(name = "name")
-    public String name;
+    private String name;
 
     @Column(name = "descr")
-    public String descr;
+    private String descr;
 
     @Column(name = "sources")
     @Type(type = "com.sergiienko.xrserver.hibernate.IntegerArrayType")
-    public Integer[] sources;
+    private Integer[] sources;
 
     @Column(name = "dflt")
-    public Boolean defaultGroup;
+    private Boolean defaultGroup;
 
     public GroupModel() {}
 

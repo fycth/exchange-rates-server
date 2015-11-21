@@ -8,19 +8,19 @@ import javax.persistence.*;
 public class RateModel {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
-    public Long id;
+    private Long id;
 
     @Column(name = "name")
-    public String name;
+    private String name;
 
     @Column(name = "rate")
-    public Double rate;
+    private Double rate;
 
     @Column(name = "source")
-    public Integer source;
+    private Integer source;
 
     @Column(name = "time")
-    public Date time;
+    private Date time;
 
     public RateModel() {}
 

@@ -7,22 +7,22 @@ import javax.persistence.*;
 public class SourceModel {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
-    public Integer id;
+    private Integer id;
 
     @Column(name = "name")
-    public String name;
+    private String name;
 
     @Column(name = "url")
-    public String url;
+    private String url;
 
     @Column(name = "descr")
-    public String descr;
+    private String descr;
 
     @Column(name = "parser_class_name")
-    public String parser_class_name;
+    private String parser_class_name;
 
     @Column(name = "enabled")
-    public Boolean enabled;
+    private Boolean enabled;
 
     public SourceModel() {}
 
