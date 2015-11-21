@@ -1,10 +1,12 @@
 
 Exchange rates server
-==
+=
 It's a simple Java application that can be used as an exchange rates server.
 It can gather rates data from a set of sources (ECB, Yahoo Finance, etc.) and store rates in DB (PostgreSQL is used by default).
 The stored rates data can be requested via REST API.
 
+Rates REST API
+-
 Compile and start ```mvn clean install exec:java```
 
 Get last rates from all sources ```/rest/rates/current```
@@ -23,4 +25,16 @@ Get rates for certain time limit
     /rest/rates/group?from=201501012012
     /rest/rates/source/2?from=20150101&to=20151012
 ```
+State REST API
+-
+The application provides state REST API that can be used for integrating with Zabbix.
+
+Get status for all data sources ```/admin/rest/state```
+
+Get status for specific data source ```/admin/rest/state/1```
+
+Admin web UI
+-
+Basic admin web UI is accessible at ```/admin```
+Can be used for administering data sourcers, groups, parsers.
 
