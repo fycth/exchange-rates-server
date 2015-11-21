@@ -5,6 +5,10 @@ It's a simple Java application that can be used as an exchange rates server.
 It can gather rates data from a set of sources (ECB, Yahoo Finance, etc.) and store rates in DB (PostgreSQL is used by default).
 The stored rates data can be requested via REST API.
 
+Check code styling (checkstyle): ```mvn checkstyle:check```
+
+Do static code analyzis (CPD/PMD): ```mvn site``` - results will be available at ```target/site/project-reports.html```
+
 Compile and start: ```mvn clean install exec:java```
 
 Rates REST API

@@ -11,14 +11,29 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.quartz.*;
+import org.quartz.JobBuilder;
+import org.quartz.JobDetail;
+import org.quartz.JobKey;
+import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
+import org.quartz.SimpleScheduleBuilder;
+import org.quartz.Scheduler;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class App {
-    public static void main(String[] args) throws Exception {
+/**
+ * Main application class
+ */
+public final class App {
+    /**
+     * Main app function
+     * @param args command line arguments
+     * @throws Exception when something is wrong
+     */
+    public static void main(final String[] args) throws Exception {
         Logger logger = LoggerFactory.getLogger(App.class);
+        final Integer appPort = 8189;
 
         logger.info("Started");
 
@@ -27,7 +42,7 @@ public class App {
         ServerConnector jettyConnector = new ServerConnector(jettyServer);
         jettyConnector.setName("xrserver");
         jettyConnector.setHost("0.0.0.0");
-        jettyConnector.setPort(8189);
+        jettyConnector.setPort(appPort);
         jettyServer.addConnector(jettyConnector);
 
         // configure jetty REST servlets
@@ -38,22 +53,22 @@ public class App {
         restServletContext.addServlet(sh, "/*");
 
         // configure jetty web servlets
-        ServletHolder web_sh = new ServletHolder(ServletContainer.class);
-        web_sh.setInitParameter(ServerProperties.PROVIDER_PACKAGES, "com.sergiienko.xrserver.web.resources");
+        ServletHolder webSH = new ServletHolder(ServletContainer.class);
+        webSH.setInitParameter(ServerProperties.PROVIDER_PACKAGES, "com.sergiienko.xrserver.web.resources");
         ServletContextHandler webServletContext = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
         webServletContext.setContextPath("/admin");
-        webServletContext.addServlet(web_sh, "/*");
+        webServletContext.addServlet(webSH, "/*");
 
         // configure jetty static files handler
-        ResourceHandler resource_handler = new ResourceHandler();
-        resource_handler.setDirectoriesListed(false);
-        resource_handler.setResourceBase("src/main/webapp/static");
+        ResourceHandler resourceHandler = new ResourceHandler();
+        resourceHandler.setDirectoriesListed(false);
+        resourceHandler.setResourceBase("src/main/webapp/static");
         ContextHandler ctx = new ContextHandler("/admin/static");
-        ctx.setHandler(resource_handler);
+        ctx.setHandler(resourceHandler);
 
         // set jetty handlers
         HandlerList handlers = new HandlerList();
-        handlers.setHandlers(new Handler[] { ctx, webServletContext, restServletContext });
+        handlers.setHandlers(new Handler[] {ctx, webServletContext, restServletContext});
         jettyServer.setHandler(handlers);
 
         // start jobs/workers
@@ -71,9 +86,15 @@ public class App {
             jettyServer.start();
             jettyServer.join();
         } finally {
-            EMF.Close();
+            EMF.closeFactory();
             jettyServer.destroy();
             logger.info("Stopped");
         }
+    }
+
+    /**
+     * Dumb constructor
+     */
+    private App() {
     }
 }

@@ -1,76 +1,154 @@
 package com.sergiienko.xrserver.models;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.GenerationType;
+import javax.persistence.Column;
 
+/**
+ * rates data source model for DB
+ */
 @Entity
-@Table(name="sources")
+@Table(name = "sources")
 public class SourceModel {
+    /**
+     * ID of the source
+     */
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    /**
+     * Name of the source
+     */
     @Column(name = "name")
     private String name;
 
+    /**
+     * URL of the source
+     */
     @Column(name = "url")
     private String url;
 
+    /**
+     * description of the source
+     */
     @Column(name = "descr")
     private String descr;
 
+    /**
+     * Class name of the source, which can serve the source
+     */
     @Column(name = "parser_class_name")
-    private String parser_class_name;
+    private String parserClassName;
 
+    /**
+     * If the source is enabled or not
+     */
     @Column(name = "enabled")
     private Boolean enabled;
 
-    public SourceModel() {}
+    /**
+     * Construct new source
+     */
+    public SourceModel() {
+    }
 
-    public Integer getId() {
+    /**
+     * Get source ID
+     * @return source ID
+     */
+    public final Integer getId() {
         return id;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    /**
+     * Set new source ID
+     * @param newId new source ID
+     */
+    public final void setId(final Integer newId) {
+        this.id = newId;
     }
 
-    public String getName() {
+    /**
+     * Get source name
+     * @return source name
+     */
+    public final String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    /**
+     * Set new source name
+     * @param newName new name
+     */
+    public final void setName(final String newName) {
+        this.name = newName;
     }
 
-    public String getUrl() {
+    /**
+     * Get source's URL
+     * @return source URL
+     */
+    public final String getUrl() {
         return url;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    /**
+     * Set source URL
+     * @param newUrl new source URL
+     */
+    public final void setUrl(final String newUrl) {
+        this.url = newUrl;
     }
 
-    public String getDescr() {
+    /**
+     * Get source description
+     * @return source description
+     */
+    public final String getDescr() {
         return descr;
     }
 
-    public void setDescr(String descr) {
-        this.descr = descr;
+    /**
+     * Set description of the source
+     * @param newDescr new source description
+     */
+    public final void setDescr(final String newDescr) {
+        this.descr = newDescr;
     }
 
-    public String getParserClassName() {
-        return parser_class_name;
+    /**
+     * Get class name of the parser which can serve this source
+     * @return parser class name
+     */
+    public final String getParserClassName() {
+        return parserClassName;
     }
 
-    public void setParserClassName(String parser_class_name) {
-        this.parser_class_name = parser_class_name;
+    /**
+     * Set class name of the parser which can serve this source
+     * @param newParserClassName new parser class name
+     */
+    public final void setParserClassName(final String newParserClassName) {
+        this.parserClassName = newParserClassName;
     }
 
-    public Boolean getEnabled() {
+    /**
+     * Is the source enabled
+     * @return enabled value
+     */
+    public final Boolean getEnabled() {
         return enabled;
     }
 
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
+    /**
+     * Enable or disable source
+     * @param newEnabled is the source enabled
+     */
+    public final void setEnabled(final Boolean newEnabled) {
+        this.enabled = newEnabled;
     }
 }

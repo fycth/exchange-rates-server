@@ -4,16 +4,27 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
 /**
- * Author: ${FULLNAME}
- * Date: 11/11/15
- * Time: 8:04 PM
+ * Here we contain entity manager factory
  */
-public class EMF {
-    public static final EntityManagerFactory entityManagerFactory;
+public final class EMF {
+    /**
+     * Entity manager factory object, used for getting entity manager objects
+     */
+    public static final EntityManagerFactory ENTITY_MANAGER_FACTORY;
     static {
-        entityManagerFactory = Persistence.createEntityManagerFactory("com.sergiienko.xrserver.jpa");
+        ENTITY_MANAGER_FACTORY = Persistence.createEntityManagerFactory("com.sergiienko.xrserver.jpa");
     }
-    public static void Close() {
-        entityManagerFactory.close();
+
+    /**
+     * Dumb constructor
+     */
+    private EMF() {
+    }
+
+    /**
+     * Close entity manager factory
+     */
+    public static void closeFactory() {
+        ENTITY_MANAGER_FACTORY.close();
     }
 }

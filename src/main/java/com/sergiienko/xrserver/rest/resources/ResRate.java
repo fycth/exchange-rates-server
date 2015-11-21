@@ -1,51 +1,106 @@
 package com.sergiienko.xrserver.rest.resources;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Date;
 
-@XmlRootElement
+/**
+ * Rate model for operating with some DB queries
+ */
 public class ResRate {
-    public String name;
-    public Double rate;
-    public Date time;
-    public Integer source;
+    /**
+     * Currency name
+     */
+    private String name;
 
-    public ResRate(String name, Double rate, Date time, Integer source) {
-        this.name = name;
-        this.rate = rate;
-        this.time = time;
-        this.source = source;
+    /**
+     * Currency exchange rate
+     */
+    private Double rate;
+
+    /**
+     * Time when the data was gathered
+     */
+    private Date time;
+
+    /**
+     * ID of the source we got this data from
+     */
+    private Integer source;
+
+    /**
+     * construct rate
+     * @param iName rate name
+     * @param iRate rate rate
+     * @param iTime rate time
+     * @param iSource source ID
+     */
+    public ResRate(final String iName, final Double iRate, final Date iTime, final Integer iSource) {
+        this.name = iName;
+        this.rate = iRate;
+        this.time = iTime;
+        this.source = iSource;
     }
 
-    public String getName() {
+    /**
+     * get rate name
+     * @return rate name
+     */
+    public final String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    /**
+     * set new rate name
+     * @param newName new rate name
+     */
+    public final void setName(final String newName) {
+        this.name = newName;
     }
 
-    public Double getRate() {
+    /**
+     * get rate
+     * @return rate
+     */
+    public final Double getRate() {
         return rate;
     }
 
-    public void setRate(Double rate) {
-        this.rate = rate;
+    /**
+     * set new exchange rate
+     * @param newRate new rate
+     */
+    public final void setRate(final Double newRate) {
+        this.rate = newRate;
     }
 
-    public Date getTime() {
+    /**
+     * get rate's timestamp
+     * @return rate time
+     */
+    public final Date getTime() {
         return time;
     }
 
-    public void setTime(Date time) {
-        this.time = time;
+    /**
+     * set new time
+     * @param newTime new time
+     */
+    public final void setTime(final Date newTime) {
+        this.time = newTime;
     }
 
-    public Integer getSource() {
+    /**
+     * get rate ID
+     * @return rate ID
+     */
+    public final Integer getSource() {
         return source;
     }
 
-    public void setSource(Integer source) {
-        this.source = source;
+    /**
+     *  set new source ID
+     * @param newSource source ID
+     */
+    public final void setSource(final Integer newSource) {
+        this.source = newSource;
     }
 }

@@ -12,27 +12,30 @@ import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.usertype.UserType;
 
+/**
+ * Hibernate does not support 'list of integers' field for PostgreSQL
+ * This is an implementation for the integer[] type that works for PostgreSQL and Hibernate
+ */
 public class IntegerArrayType implements UserType {
 
     @Override
-    public Object assemble(Serializable cached, Object owner)
+    public final Object assemble(final Serializable cached, final Object owner)
             throws HibernateException {
         return this.deepCopy(cached);
     }
 
     @Override
-    public Object deepCopy(Object value) throws HibernateException {
+    public final Object deepCopy(final Object value) throws HibernateException {
         return value;
     }
 
     @Override
-    public Serializable disassemble(Object value) throws HibernateException {
+    public final Serializable disassemble(final Object value) throws HibernateException {
         return (Integer[]) this.deepCopy(value);
     }
 
     @Override
-    public boolean equals(Object x, Object y) throws HibernateException {
-
+    public final boolean equals(final Object x, final Object y) throws HibernateException {
         if (x == null) {
             return y == null;
         }
@@ -40,18 +43,18 @@ public class IntegerArrayType implements UserType {
     }
 
     @Override
-    public int hashCode(Object x) throws HibernateException {
+    public final int hashCode(final Object x) throws HibernateException {
         return x.hashCode();
     }
 
     @Override
-    public boolean isMutable() {
+    public final boolean isMutable() {
         return true;
     }
 
     @Override
-    public Object nullSafeGet(ResultSet resultSet, String[] names,
-                              SessionImplementor session, Object owner)
+    public final Object nullSafeGet(final ResultSet resultSet, final String[] names,
+                              final SessionImplementor session, final Object owner)
             throws HibernateException, SQLException {
         Array array = resultSet.getArray(names[0]);
         Integer[] javaArray = (Integer[]) array.getArray();
@@ -59,8 +62,8 @@ public class IntegerArrayType implements UserType {
     }
 
     @Override
-    public void nullSafeSet(PreparedStatement statement, Object value,
-                            int index, SessionImplementor session) throws HibernateException,
+    public final void nullSafeSet(final PreparedStatement statement, final Object value,
+                            final int index, final SessionImplementor session) throws HibernateException,
             SQLException {
         Connection connection = statement.getConnection();
         Integer[] castObject = (Integer[]) value;
@@ -69,18 +72,18 @@ public class IntegerArrayType implements UserType {
     }
 
     @Override
-    public Object replace(Object original, Object target, Object owner)
+    public final Object replace(final Object original, final Object target, final Object owner)
             throws HibernateException {
         return original;
     }
 
     @Override
-    public Class<Integer[]> returnedClass() {
+    public final Class<Integer[]> returnedClass() {
         return Integer[].class;
     }
 
     @Override
-    public int[] sqlTypes() {
-        return new int[] { Types.ARRAY };
+    public final int[] sqlTypes() {
+        return new int[] {Types.ARRAY};
     }
 }

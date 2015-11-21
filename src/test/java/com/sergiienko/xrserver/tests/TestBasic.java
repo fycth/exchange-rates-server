@@ -32,7 +32,7 @@ public class TestBasic {
 
         Class cl = Class.forName("com.sergiienko.xrserver.rest.resources.RateResource");
         Object ob = cl.newInstance();
-        Method m = RateResource.class.getDeclaredMethod("get_t_max", String.class);
+        Method m = RateResource.class.getDeclaredMethod("getTimeMax", String.class);
         m.setAccessible(true);
         assertEquals("Testing null parameter", now, m.invoke(ob, (String)null));
         assertEquals("Testing yyyyMMdd", d1, m.invoke(ob, new String("20150101")));
@@ -57,7 +57,7 @@ public class TestBasic {
 
         Class cl = Class.forName("com.sergiienko.xrserver.rest.resources.RateResource");
         Object ob = cl.newInstance();
-        Method m = RateResource.class.getDeclaredMethod("get_t_min", String.class);
+        Method m = RateResource.class.getDeclaredMethod("getTimeMin", String.class);
         m.setAccessible(true);
         assertEquals("Testing null parameter", now, m.invoke(ob, (String)null));
         assertEquals("Testing yyyyMMdd", d1, m.invoke(ob, new String("20150101")));

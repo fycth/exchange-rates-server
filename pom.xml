@@ -23,6 +23,14 @@
         <orgJSONVersion>20150729</orgJSONVersion>
         <c3poVersion>0.9.5.1</c3poVersion>
         <findBugsVersion>3.0.2</findBugsVersion>
+        <PMDPluginVersion>3.5</PMDPluginVersion>
+        <infoReportsPlugin>2.8.1</infoReportsPlugin>
+        <checkStylePluginVersion>2.17</checkStylePluginVersion>
+        <targedJavaVersion>1.7</targedJavaVersion>
+        <sourceJavaVersion>1.7</sourceJavaVersion>
+        <compilerPluginVersion>2.5.1</compilerPluginVersion>
+        <execPluginVersion>1.4.0</execPluginVersion>
+        <checkstyle.config.location>etc/checkstyle.xml</checkstyle.config.location>
     </properties>
 
     <dependencies>
@@ -123,12 +131,22 @@
     <reporting>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>${findBugsVersion}</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>${PMDPluginVersion}</version>
                 <configuration>
-                    <onlyAnalyze>com.sergiienko.*</onlyAnalyze>
+                    <skipEmptyReport>false</skipEmptyReport>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>${infoReportsPlugin}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${checkStylePluginVersion}</version>
             </plugin>
         </plugins>
     </reporting>
@@ -140,16 +158,16 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <inherited>true</inherited>
-                <version>2.5.1</version>
+                <version>${compilerPluginVersion}</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>${sourceJavaVersion}</source>
+                    <target>${targedJavaVersion}</target>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>1.4.0</version>
+                <version>${execPluginVersion}</version>
                 <executions>
                     <execution>
                         <goals>

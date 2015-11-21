@@ -14,26 +14,37 @@ import javax.persistence.Query;
 import java.lang.reflect.Constructor;
 import java.util.List;
 
+/**
+ * We start worker every amount of time
+ * Worker starts parsers
+ */
 public class Worker implements Job {
-    Logger logger = LoggerFactory.getLogger(Worker.class);
-    EntityManager entityManager = EMF.entityManagerFactory.createEntityManager();
+    /**
+     * Logger object, for writing logs
+     */
+    private Logger logger = LoggerFactory.getLogger(Worker.class);
+
+    /**
+     * Entity manager object, for working with DB
+     */
+    private EntityManager entityManager = EMF.ENTITY_MANAGER_FACTORY.createEntityManager();
 
     @Override
-    public void execute(JobExecutionContext context) throws JobExecutionException {
+    public final void execute(final JobExecutionContext context) throws JobExecutionException {
         try {
             AppState.clearState();
             entityManager.getTransaction().begin();
             Query q = entityManager.createQuery("from SourceModel where enabled = :arg1", SourceModel.class);
-            q.setParameter("arg1",true);
+            q.setParameter("arg1", true);
             List<SourceModel> sources = q.getResultList();
             entityManager.getTransaction().commit();
             entityManager.close();
             for (SourceModel source : sources) {
                 try {
-                    Class<?> parser_class = Class.forName(source.getParserClassName());
-                    Constructor<?> constructor = parser_class.getConstructor();
-                    RatesParser parser_instance = (RatesParser) constructor.newInstance();
-                    parser_instance.run(source.getUrl(), source.getId());
+                    Class<?> parserClass = Class.forName(source.getParserClassName());
+                    Constructor<?> constructor = parserClass.getConstructor();
+                    RatesParser parserInstance = (RatesParser) constructor.newInstance();
+                    parserInstance.run(source.getUrl(), source.getId());
                 } catch (Exception e) {
                     logger.error("Can't update rates for source " + source.getId() + ", parser exception: " + e);
                 }

@@ -1,67 +1,134 @@
 package com.sergiienko.xrserver.models;
 
 import org.hibernate.annotations.Type;
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.GenerationType;
+import javax.persistence.Column;
 
+/**
+ * Sources group model for DB
+ */
 @Entity
 @Table(name = "groups")
 public class GroupModel {
+    /**
+     * Group ID
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    /**
+     * Name of the group
+     */
     @Column(name = "name")
     private String name;
 
+    /**
+     * Group description
+     */
     @Column(name = "descr")
     private String descr;
 
+    /**
+     * List of sources arranged to this group
+     */
     @Column(name = "sources")
     @Type(type = "com.sergiienko.xrserver.hibernate.IntegerArrayType")
     private Integer[] sources;
 
+    /**
+     * If the group is default
+     */
     @Column(name = "dflt")
     private Boolean defaultGroup;
 
-    public GroupModel() {}
+    /**
+     * Create new group object
+     */
+    public GroupModel() {
+    }
 
-    public Integer getId() {
+    /**
+     * Get group ID
+     * @return group ID
+     */
+    public final Integer getId() {
         return id;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    /**
+     * Set new group ID
+     * @param newId new group ID
+     */
+    public final void setId(final Integer newId) {
+        this.id = newId;
     }
 
-    public String getName() {
+    /**
+     * Get group name
+     * @return group name
+     */
+    public final String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    /**
+     * Set group name
+     * @param newName group name
+     */
+    public final void setName(final String newName) {
+        this.name = newName;
     }
 
-    public String getDescr() {
+    /**
+     * Get group description
+     * @return group description
+     */
+    public final String getDescr() {
         return descr;
     }
 
-    public void setDescr(String descr) {
-        this.descr = descr;
+    /**
+     * Set group description
+     * @param newDescr group description
+     */
+    public final void setDescr(final String newDescr) {
+        this.descr = newDescr;
     }
 
-    public Integer[] getSources() {
+    /**
+     * Get list of group sources
+     * @return list of group sources arranged in the group
+     */
+    public final Integer[] getSources() {
         return sources;
     }
 
-    public void setSources(Integer[] sources) {
-        this.sources = sources;
+    /**
+     * Set list of sources arranged in the group
+     * @param newSources list of sources
+     */
+    public final void setSources(final Integer[] newSources) {
+        this.sources = newSources;
     }
 
-    public Boolean getDefaultGroup() {
+    /**
+     * Check if the group is the default group
+     * @return default value
+     */
+    public final Boolean getDefaultGroup() {
         return defaultGroup;
     }
 
-    public void setDefaultGroup(Boolean defaultGroup) {
-        this.defaultGroup = defaultGroup;
+    /**
+     * Set group default value
+     * @param newDefaultGroup default value
+     */
+    public final void setDefaultGroup(final Boolean newDefaultGroup) {
+        this.defaultGroup = newDefaultGroup;
     }
 }

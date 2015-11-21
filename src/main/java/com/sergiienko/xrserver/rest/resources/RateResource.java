@@ -8,68 +8,124 @@ import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Date;
 
+/**
+ * Serves rates REST API
+ */
 @Path("/rates")
 public class RateResource {
-    private EntityManager entityManager = EMF.entityManagerFactory.createEntityManager();
-    private Logger logger = LoggerFactory.getLogger(RateResource.class);
-    private DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-
-    /*
-    Get all rates for current hour for all sources
-    If from/to parameters are passed, get rates for the specified time limit
-    from/to parameters be like 'yyyyMMdd[HHmm]'
+    /**
+     * Entity manager object, for working with DB
      */
-    // /rest/current ->
+    private EntityManager entityManager = EMF.ENTITY_MANAGER_FACTORY.createEntityManager();
+
+    /**
+     * Logger object, for working with logs
+     */
+    private final Logger logger = LoggerFactory.getLogger(RateResource.class);
+
+    /**
+     * Data format, used for formatting time to human readable form in XML/JSON responses
+     */
+    private final DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+
+    /**
+     * Data format, used for parsing 'to' and 'from' parameters in REST requests
+     */
+    private final DateFormat requestDF = new SimpleDateFormat("yyyyMMddHHmm");
+
+    /**
+     * Get all rates for current hour for all sources
+     * If from/to parameters are passed, get rates for the specified time limit
+     * from/to parameters be like 'yyyyMMdd[HHmm]'
+     * REST /rest/current
+     * @param accepts list of media types accepted by client
+     * @param from from time point
+     * @param to to time point
+     * @return string of rates in appropriate format (JSON/XML)
+     */
     @Path("/current")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public String listCurrentRates(@HeaderParam("accept") String accepts,
-                                   @QueryParam("from") String from, @QueryParam("to") String to) {
-        List<ResRate> results = getRatesForSourceID(null,from,to);
+    public final String listCurrentRates(@HeaderParam("accept") final String accepts,
+                                   @QueryParam("from") final String from,
+                                   @QueryParam("to") final String to) {
+        List<ResRate> results = getRatesForSourceID(null, from, to);
         Map<Integer, List<ResRate>> m = new HashMap<>();
         for (ResRate r : results) {
-            if (null == m.get(r.getSource())) m.put(r.getSource(), new ArrayList<ResRate>());
+            if (null == m.get(r.getSource())) {
+                m.put(r.getSource(), new ArrayList<ResRate>());
+            }
             m.get(r.getSource()).add(r);
         }
-        if (-1 != accepts.indexOf("xml")) return rates2xml(m);
-        else return rates2json(m);
+        if (-1 != accepts.indexOf("xml")) {
+            return rates2xml(m);
+        } else {
+            return rates2json(m);
+        }
     }
 
-    /*
-    Get all rates for the specific source ID
-    If 'form' and/or 'to' parameters are passed, print rates for the specific time limit
-    from/to parameters be like 'yyyyMMdd[HHmm]'
+    /**
+     * Get all current hour rates for the specific source ID
+     * If 'form' and/or 'to' parameters are passed, print rates for the specific time limit
+     * from/to parameters be like 'yyyyMMdd[HHmm]'
+     * REST /rest/current/{source}
+     * @param accepts list of media types accepted by client
+     * @param sourceID source ID
+     * @param from from time point
+     * @param to to time point
+     * @param legacy if this parameter is passed, generate legacy XML (like ECB XML feed)
+     * @return string of rates in appropriate format (JSON/XML)
      */
-    // /rest/current/{source} -> all rates for current hour for specific source
     @Path("/source/{source}")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public String listCurrentRates(@HeaderParam("accept") String accepts, @PathParam("source") Integer sourceID,
-                                   @QueryParam("from") String from, @QueryParam("to") String to,
-                                   @QueryParam("legacy") String legacy) {
+    public final String listCurrentRates(@HeaderParam("accept") final String accepts,
+                                         @PathParam("source") final Integer sourceID,
+                                   @QueryParam("from") final String from,
+                                   @QueryParam("to") final String to,
+                                   @QueryParam("legacy") final String legacy) {
         List<ResRate> rates = getRatesForSourceID(sourceID, from, to);
         Map<Integer, List<ResRate>> m = new HashMap<>();
-        m.put(sourceID,rates);
-        if (null != legacy) return rates2legacyXML(m);
-        if (-1 != accepts.indexOf("xml")) return rates2xml(m);
-        else return rates2json(m);
+        m.put(sourceID, rates);
+        if (null != legacy) {
+            return rates2legacyXML(m);
+        }
+        if (-1 != accepts.indexOf("xml")) {
+            return rates2xml(m);
+        } else {
+            return rates2json(m);
+        }
     }
 
-    /*
-    Puts currency and rate into DB with 'source' as (-1) and with the current timestamp
+    /**
+     * Puts currency and rate into DB with 'source' as (-1) and with the current timestamp
+     * REST /rest/put/{currency}/{rate}
+     * @param currency currency name
+     * @param rate currency rate
+     * @return new rate object formatted in JSON
      */
-    // /rest/put/{currency}/{rate}
     @Path("/put/{currency}/{rate}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public RateModel newRate(@PathParam("currency") String currency, @PathParam("rate") String rate) {
-        RateModel rm = new RateModel(currency,Double.parseDouble(rate),new Integer(-1));
+    public final RateModel newRate(@PathParam("currency") final String currency, @PathParam("rate") final String rate) {
+        RateModel rm = new RateModel(currency, Double.parseDouble(rate), -1);
         entityManager.getTransaction().begin();
         entityManager.persist(rm);
         entityManager.getTransaction().commit();
@@ -78,74 +134,98 @@ public class RateResource {
         return rm;
     }
 
-    /*
-    Get all rates for the current hour for the specified {groupID} group
-    If 'from' or/and 'to' parameters are passed, return data for the given time limit
-    from/to parameters be like 'yyyyMMdd[HHmm]'
+    /**
+     * Get all rates for the current hour for the specified {groupID} group
+     * If 'from' or/and 'to' parameters are passed, return data for the given time limit
+     * from/to parameters be like 'yyyyMMdd[HHmm]'
+     * REST /rest/rates/group/{groupid}
+     * @param accepts list of media types accepted by client
+     * @param groupid group ID
+     * @param from from time point
+     * @param to to time point
+     * @return string of rates in appropriate format (JSON/XML)
      */
-    // /rest/rates/group/{groupid}
     @Path("/group/{groupid}")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public String listGroupRates(@HeaderParam("accept") String accepts,
-                                              @PathParam("groupid") Integer groupid,
-                                              @QueryParam("from") String from, @QueryParam("to") String to) {
+    public final String listGroupRates(@HeaderParam("accept") final String accepts,
+                                              @PathParam("groupid") final Integer groupid,
+                                              @QueryParam("from") final String from, @QueryParam("to") final String to) {
         entityManager.getTransaction().begin();
         GroupModel group = entityManager.createQuery("from GroupModel where id=:arg1", GroupModel.class).
                 setParameter("arg1", groupid).getSingleResult();
         entityManager.getTransaction().commit();
-        Map<Integer, List<ResRate>> rates = getRateForGroup(group,from,to);
-        if (-1 != accepts.indexOf("xml")) return rates2xml(rates);
-        return rates2json(rates);
+        Map<Integer, List<ResRate>> rates = getRateForGroup(group, from, to);
+        if (-1 != accepts.indexOf("xml")) {
+            return rates2xml(rates);
+        } else {
+            return rates2json(rates);
+        }
     }
 
-    /*
-    Get all rates for the current hour for the default group
-    If 'from' or/and 'to' parameters are passed, return data for the given time limit
-    from/to parameters be like 'yyyyMMdd[HHmm]'
-    */
-    // /rest/rates/group
+    /**
+     * Get all rates for the current hour for the default group
+     * If 'from' or/and 'to' parameters are passed, return data for the given time limit
+     * from/to parameters be like 'yyyyMMdd[HHmm]'
+     * REST /rest/rates/group
+     * @param accepts list of media types accepted by client
+     * @param from from time point
+     * @param to to time point
+     * @return string of rates in appropriate format (JSON/XML)
+     */
     @Path("/group")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public String listDefGroupRates(@HeaderParam("accept") String accepts,
-                                                 @QueryParam("from") String from, @QueryParam("to") String to) {
+    public final String listDefGroupRates(@HeaderParam("accept") final String accepts,
+                                                 @QueryParam("from") final String from,
+                                                 @QueryParam("to") final String to) {
         entityManager.getTransaction().begin();
         GroupModel group = entityManager.createQuery("from GroupModel where dflt=true", GroupModel.class).getSingleResult();
         entityManager.getTransaction().commit();
-        Map<Integer, List<ResRate>> rates = getRateForGroup(group,from,to);
-        if (-1 != accepts.indexOf("xml")) return rates2xml(rates);
-        return rates2json(rates);
+        Map<Integer, List<ResRate>> rates = getRateForGroup(group, from, to);
+        if (-1 != accepts.indexOf("xml")) {
+            return rates2xml(rates);
+        } else {
+            return rates2json(rates);
+        }
     }
 
-    /*
-    Get rates per specific group
+    /**
+     * Get rates for specific group
+     * @param group group ID
+     * @param from from time point
+     * @param to to time point
+     * @return rates for specific group
      */
-    private Map<Integer, List<ResRate>> getRateForGroup(GroupModel group, String from, String to) {
+    private Map<Integer, List<ResRate>> getRateForGroup(final GroupModel group, final String from, final String to) {
         Map<Integer, List<ResRate>> m = new HashMap<>();
         for (Integer sourceID : group.getSources()) {
-            List<ResRate> rates = getRatesForSourceID(sourceID,from,to);
+            List<ResRate> rates = getRatesForSourceID(sourceID, from, to);
             for (ResRate r : rates) {
-                if (null == m.get(r.getSource())) m.put(r.getSource(), new ArrayList<ResRate>());
+                if (null == m.get(r.getSource())) {
+                    m.put(r.getSource(), new ArrayList<ResRate>());
+                }
                 m.get(r.getSource()).add(r);
             }
         }
         return m;
     }
 
-    /*
-    Gets time in a yyyyMMdd[HHmm] format, rounds it up to the beginning of the hour
-    Example: 201501022234 -> 201501022200
-    Returns Date
+    /**
+     * Gets time in a yyyyMMdd[HHmm] format, rounds it up to the beginning of the hour
+     * Example: 201501022234 -> 201501022200
+     * @param from from time limit
+     * @return calculated Date
      */
-     private Date get_t_min(String from) {
-        DateFormat df = new SimpleDateFormat("yyyyMMddHHmm");
+     private Date getTimeMin(final String from) {
+         final Integer maxTimeLen = 12;
         if (null != from) {
-            from += "0000".substring(0,12 - from.length());
+            String actualFrom = from;
+            actualFrom += "0000".substring(0, maxTimeLen - from.length());
             try {
-                return(df.parse(from));
+                return requestDF.parse(actualFrom);
             } catch (Exception e) {
-                logger.error("Unable to parse '" + from + "' from-string. Will use current hour. Exception is: " + e);
+                logger.error("Unable to parse '" + actualFrom + "' from-string. Will use current hour. Exception is: " + e);
             }
         }
         Calendar calendar = GregorianCalendar.getInstance();
@@ -156,39 +236,51 @@ public class RateResource {
         return calendar.getTime();
     }
 
-    /*
-    Gets time in a yyyyMMdd[HHmm] format, rounds it up to the end of the hour
-    Example: 201501022234 -> 201501022259
-    Returns Date
+    /**
+     * Gets time in a yyyyMMdd[HHmm] format, rounds it up to the end of the hour
+     * Example: 201501022234 -> 201501022259
+     * @param to to time limit
+     * @return calculated Date
      */
-    private Date get_t_max(String to) {
-        DateFormat df = new SimpleDateFormat("yyyyMMddHHmm");
+    private Date getTimeMax(final String to) {
+        final Integer maxMinute = 59;
+        final Integer maxDateLength = 10;
+        final Integer minDateLength = 8;
+
         if (null != to) {
-            if (8 == to.length()) to += "2359";
-            else if (10 == to.length()) to += "59";
+            String actualTo = to;
+            if (minDateLength == to.length()) {
+                actualTo += "2359";
+            } else if (maxDateLength == to.length()) {
+                actualTo += "59";
+            }
             try {
-                return (df.parse(to));
+                return requestDF.parse(actualTo);
             } catch (Exception e) {
-                logger.error("Unable to parse '" + to + "' to-string. Will use current hour. Exception is:  " + e);
+                logger.error("Unable to parse '" + actualTo + "' to-string. Will use current hour. Exception is:  " + e);
             }
         }
         Calendar calendar = GregorianCalendar.getInstance();
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
-        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.MINUTE, maxMinute);
         return calendar.getTime();
     }
 
-    /*
-    Get all rates for the specified sourceID.
-    If sourceID is null, get rates for all sources
-    If from/to parameters are not null, get rates for the appropriate time limit,
-    otherwise, get rates for the current hour
-    from/to parameters be like 'yyyyMMdd[HHmm]'
+    /**
+     * Get all rates for the specified sourceID.
+     * If sourceID is null, get rates for all sources
+     * If from/to parameters are not null, get rates for the appropriate time limit,
+     * otherwise, get rates for the current hour
+     * from/to parameters be like 'yyyyMMdd[HHmm]'
+     * @param sourceID ID of the source we need rates from
+     * @param from from time point
+     * @param to to time point
+     * @return list of rates
      */
-    private List<ResRate> getRatesForSourceID(Integer sourceID, String from, String to) {
-        Date t_min = get_t_min(from);
-        Date t_max = get_t_max(to);
+    private List<ResRate> getRatesForSourceID(final Integer sourceID, final String from, final String to) {
+        Date tMin = getTimeMin(from);
+        Date tMax = getTimeMax(to);
         entityManager.getTransaction().begin();
         Query q;
         if (null == sourceID) {
@@ -197,20 +289,21 @@ public class RateResource {
             q = entityManager.createQuery("SELECT NEW com.sergiienko.xrserver.rest.resources.ResRate(name,rate,MAX(time),source) FROM RateModel WHERE time < :t_max AND time > :t_min AND source = :src GROUP BY name,rate,source", ResRate.class);
             q.setParameter("src", sourceID);
         }
-        q.setParameter("t_min", t_min);
-        q.setParameter("t_max", t_max);
+        q.setParameter("t_min", tMin);
+        q.setParameter("t_max", tMax);
         List<ResRate> rates = q.getResultList();
         entityManager.getTransaction().commit();
         return rates;
     }
 
-    /*
-    Gets list of rates
-    Returns XML string
+    /**
+     * Convert rates into XML
+     * @param rates rates
+     * @return XML string
      */
-    private String rates2xml(Map<Integer, List<ResRate>> rates) {
+    private String rates2xml(final Map<Integer, List<ResRate>> rates) {
         StringBuilder res = new StringBuilder("<?xml version=\"1.0\"?><rates><sources>");
-        for (Map.Entry<Integer,List<ResRate>> entry : rates.entrySet()) {
+        for (Map.Entry<Integer, List<ResRate>> entry : rates.entrySet()) {
             res.append("<source id=\"" + entry.getKey() + "\"><currencies>");
             for (ResRate rate : entry.getValue()) {
                 res.append("<currency>");
@@ -226,21 +319,30 @@ public class RateResource {
         return res.toString();
     }
 
-    /*
-   Gets list of rates
-   Returns JSON string
-    */
-    private String rates2json(Map<Integer, List<ResRate>> rates) {
+    /**
+     * Convert rates into JSON
+     * @param rates rates
+     * @return JSON string
+     */
+    private String rates2json(final Map<Integer, List<ResRate>> rates) {
         StringBuilder res = new StringBuilder("{\"rates\": {\"sources\": {");
         int j = 0;
-        for (Map.Entry<Integer,List<ResRate>> entry : rates.entrySet()) {
-            if (j > 0) res.append(","); else j++;
+        for (Map.Entry<Integer, List<ResRate>> entry : rates.entrySet()) {
+            if (j > 0) {
+                res.append(",");
+            } else {
+                j++;
+            }
             res.append("\"" + entry.getKey() + "\":[");
             int i = 0;
             for (ResRate rate : entry.getValue()) {
-                if (i > 0) res.append(","); else i++;
-                res.append("\"" + rate.getName() + "\":{\"rate\":" + rate.getRate() + ",\"timestamp\":" +
-                        rate.getTime().getTime() + ",\"humantime\":\"" + df.format(rate.getTime()) + "\"}");
+                if (i > 0) {
+                    res.append(",");
+                } else {
+                    i++;
+                }
+                res.append("\"" + rate.getName() + "\":{\"rate\":" + rate.getRate() + ",\"timestamp\":"
+                        + rate.getTime().getTime() + ",\"humantime\":\"" + df.format(rate.getTime()) + "\"}");
             }
             res.append("]");
         }
@@ -248,14 +350,19 @@ public class RateResource {
         return res.toString();
     }
 
-    private String rates2legacyXML(Map<Integer, List<ResRate>> rates) {
+    /**
+     * Convert rates into legacy XML (ECB XML feed)
+     * @param rates rates
+     * @return legacy XML
+     */
+    private String rates2legacyXML(final Map<Integer, List<ResRate>> rates) {
         StringBuilder res = new StringBuilder("<gesmes:Envelope xmlns:gesmes=\"http://www.gesmes.org/xml/2002-08-01\" xmlns=\"http://www.ecb.int/vocabulary/2002-08-01/eurofxref\">\n");
         res.append("<gesmes:subject>Reference rates</gesmes:subject>\n");
         res.append("<gesmes:Sender>\n" + "<gesmes:name>European Central Bank</gesmes:name>\n</gesmes:Sender>");
         Calendar calendar = GregorianCalendar.getInstance();
         DateFormat xmldf = new SimpleDateFormat("yyyy-MM-dd");
         res.append("<Cube>\n<Cube time=\"" + xmldf.format(calendar.getTime()) + "\">");
-        for (Map.Entry<Integer,List<ResRate>> entry : rates.entrySet()) {
+        for (Map.Entry<Integer, List<ResRate>> entry : rates.entrySet()) {
             for (ResRate rate : entry.getValue()) {
                 res.append("<Cube currency=\"" + rate.getName() + "\" rate=\"" + rate.getRate() + "\" />");
             }
