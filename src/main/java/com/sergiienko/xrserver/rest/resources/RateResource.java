@@ -51,10 +51,12 @@ public class RateResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public String listCurrentRates(@HeaderParam("accept") String accepts, @PathParam("source") Integer sourceID,
-                                   @QueryParam("from") String from, @QueryParam("to") String to) {
+                                   @QueryParam("from") String from, @QueryParam("to") String to,
+                                   @QueryParam("legacy") String legacy) {
         List<ResRate> rates = getRatesForSourceID(sourceID, from, to);
         Map<Integer, List<ResRate>> m = new HashMap<>();
         m.put(sourceID,rates);
+        if (null != legacy) return rates2legacyXML(m);
         if (-1 != accepts.indexOf("xml")) return rates2xml(m);
         else return rates2json(m);
     }
@@ -243,6 +245,22 @@ public class RateResource {
             res.append("]");
         }
         res.append("}}}");
+        return res.toString();
+    }
+
+    private String rates2legacyXML(Map<Integer, List<ResRate>> rates) {
+        StringBuilder res = new StringBuilder("<gesmes:Envelope xmlns:gesmes=\"http://www.gesmes.org/xml/2002-08-01\" xmlns=\"http://www.ecb.int/vocabulary/2002-08-01/eurofxref\">\n");
+        res.append("<gesmes:subject>Reference rates</gesmes:subject>\n");
+        res.append("<gesmes:Sender>\n" + "<gesmes:name>European Central Bank</gesmes:name>\n</gesmes:Sender>");
+        Calendar calendar = GregorianCalendar.getInstance();
+        DateFormat xmldf = new SimpleDateFormat("yyyy-MM-dd");
+        res.append("<Cube>\n<Cube time=\"" + xmldf.format(calendar.getTime()) + "\">");
+        for (Map.Entry<Integer,List<ResRate>> entry : rates.entrySet()) {
+            for (ResRate rate : entry.getValue()) {
+                res.append("<Cube currency=\"" + rate.getName() + "\" rate=\"" + rate.getRate() + "\" />");
+            }
+            res.append("</Cube>\n</Cube>\n</gesmes:Envelope>");
+        }
         return res.toString();
     }
 }
