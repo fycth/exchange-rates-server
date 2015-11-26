@@ -4,7 +4,6 @@ import com.sergiienko.xrserver.EMF;
 import com.sergiienko.xrserver.models.CurrencyGroupModel;
 import com.sergiienko.xrserver.models.GroupModel;
 import com.sergiienko.xrserver.models.RateModel;
-import org.glassfish.jersey.process.internal.RequestScoped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,6 @@ import java.util.Date;
 /**
  * Serves rates REST API
  */
-@RequestScoped
 @Path("/rates")
 public class RateResource {
     /**
@@ -77,6 +75,8 @@ public class RateResource {
             }
             m.get(r.getSource()).add(r);
         }
+        entityManager.getTransaction().commit();
+        entityManager.close();
         if (-1 != accepts.indexOf("xml")) {
             return rates2xml(m);
         } else {
@@ -110,6 +110,8 @@ public class RateResource {
         if (null != legacy) {
             return rates2legacyXML(m);
         }
+        entityManager.getTransaction().commit();
+        entityManager.close();
         if (-1 != accepts.indexOf("xml")) {
             return rates2xml(m);
         } else {
@@ -129,7 +131,6 @@ public class RateResource {
     @Produces(MediaType.APPLICATION_JSON)
     public final RateModel newRate(@PathParam("currency") final String currency, @PathParam("rate") final String rate) {
         RateModel rm = new RateModel(currency, Double.parseDouble(rate), -1);
-        entityManager.getTransaction().begin();
         entityManager.persist(rm);
         entityManager.getTransaction().commit();
         entityManager.close();
@@ -154,12 +155,11 @@ public class RateResource {
     public final String listGroupRates(@HeaderParam("accept") final String accepts,
                                               @PathParam("groupid") final Integer groupid,
                                               @QueryParam("from") final String from, @QueryParam("to") final String to) {
-        entityManager.getTransaction().begin();
         GroupModel group = entityManager.createQuery("from GroupModel where id=:arg1", GroupModel.class).
                 setParameter("arg1", groupid).getSingleResult();
+        Map<Integer, List<ResRate>> rates = getRateForGroup(group, from, to);
         entityManager.getTransaction().commit();
         entityManager.close();
-        Map<Integer, List<ResRate>> rates = getRateForGroup(group, from, to);
         if (-1 != accepts.indexOf("xml")) {
             return rates2xml(rates);
         } else {
@@ -183,11 +183,10 @@ public class RateResource {
     public final String listDefGroupRates(@HeaderParam("accept") final String accepts,
                                                  @QueryParam("from") final String from,
                                                  @QueryParam("to") final String to) {
-        entityManager.getTransaction().begin();
         GroupModel group = entityManager.createQuery("from GroupModel where dflt=true", GroupModel.class).getSingleResult();
+        Map<Integer, List<ResRate>> rates = getRateForGroup(group, from, to);
         entityManager.getTransaction().commit();
         entityManager.close();
-        Map<Integer, List<ResRate>> rates = getRateForGroup(group, from, to);
         if (-1 != accepts.indexOf("xml")) {
             return rates2xml(rates);
         } else {
@@ -214,12 +213,11 @@ public class RateResource {
                                        @PathParam("groupid") final Integer groupid,
                                        @QueryParam("from") final String from, @QueryParam("to") final String to,
                                        @QueryParam("legacy") final String legacy) {
-        entityManager.getTransaction().begin();
         CurrencyGroupModel group = entityManager.createQuery("from CurrencyGroupModel where id=:arg1", CurrencyGroupModel.class).
                 setParameter("arg1", groupid).getSingleResult();
+        List<ResRate> rates = getRateForCurrencyGroup(group, from, to);
         entityManager.getTransaction().commit();
         entityManager.close();
-        List<ResRate> rates = getRateForCurrencyGroup(group, from, to);
         if (null != legacy) {
             return rates2legacyXML(rates);
         }
@@ -248,11 +246,11 @@ public class RateResource {
                                           @QueryParam("from") final String from,
                                           @QueryParam("to") final String to,
                                           @QueryParam("legacy") final String legacy) {
-        entityManager.getTransaction().begin();
+
         CurrencyGroupModel group = entityManager.createQuery("from CurrencyGroupModel where dflt=true", CurrencyGroupModel.class).getSingleResult();
+        List<ResRate> rates = getRateForCurrencyGroup(group, from, to);
         entityManager.getTransaction().commit();
         entityManager.close();
-        List<ResRate> rates = getRateForCurrencyGroup(group, from, to);
         if (null != legacy) {
             return rates2legacyXML(rates);
         }
@@ -377,7 +375,6 @@ public class RateResource {
     public final List<ResRate> getRatesForSourceID(final Integer sourceID, final String from, final String to) {
         Date tMin = getTimeMin(from);
         Date tMax = getTimeMax(to);
-        entityManager.getTransaction().begin();
         Query q;
         if (null == sourceID) {
             q = entityManager.createQuery("SELECT NEW com.sergiienko.xrserver.rest.resources.ResRate(name,rate,MAX(time),source) FROM RateModel WHERE time < :t_max AND time > :t_min GROUP BY name,source,rate", ResRate.class);
@@ -388,8 +385,6 @@ public class RateResource {
         q.setParameter("t_min", tMin);
         q.setParameter("t_max", tMax);
         List<ResRate> rates = q.getResultList();
-        entityManager.getTransaction().commit();
-        entityManager.close();
         return rates;
     }
 
@@ -525,5 +520,9 @@ public class RateResource {
         }
         res.append("</Cube>\n</Cube>\n</gesmes:Envelope>");
         return res.toString();
+    }
+
+    public RateResource() {
+        entityManager.getTransaction().begin();
     }
 }
