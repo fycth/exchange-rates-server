@@ -2,5 +2,5 @@ target
 .idea
 *.iml
 temp
-log/*.log
+log/*.log*
 dependency-reduced-pom.xml
