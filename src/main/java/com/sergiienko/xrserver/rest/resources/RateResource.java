@@ -4,6 +4,7 @@ import com.sergiienko.xrserver.EMF;
 import com.sergiienko.xrserver.models.CurrencyGroupModel;
 import com.sergiienko.xrserver.models.GroupModel;
 import com.sergiienko.xrserver.models.RateModel;
+import org.glassfish.jersey.process.internal.RequestScoped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,7 @@ import java.util.Date;
 /**
  * Serves rates REST API
  */
+@RequestScoped
 @Path("/rates")
 public class RateResource {
     /**
@@ -156,6 +158,7 @@ public class RateResource {
         GroupModel group = entityManager.createQuery("from GroupModel where id=:arg1", GroupModel.class).
                 setParameter("arg1", groupid).getSingleResult();
         entityManager.getTransaction().commit();
+        entityManager.close();
         Map<Integer, List<ResRate>> rates = getRateForGroup(group, from, to);
         if (-1 != accepts.indexOf("xml")) {
             return rates2xml(rates);
@@ -183,6 +186,7 @@ public class RateResource {
         entityManager.getTransaction().begin();
         GroupModel group = entityManager.createQuery("from GroupModel where dflt=true", GroupModel.class).getSingleResult();
         entityManager.getTransaction().commit();
+        entityManager.close();
         Map<Integer, List<ResRate>> rates = getRateForGroup(group, from, to);
         if (-1 != accepts.indexOf("xml")) {
             return rates2xml(rates);
@@ -214,6 +218,7 @@ public class RateResource {
         CurrencyGroupModel group = entityManager.createQuery("from CurrencyGroupModel where id=:arg1", CurrencyGroupModel.class).
                 setParameter("arg1", groupid).getSingleResult();
         entityManager.getTransaction().commit();
+        entityManager.close();
         List<ResRate> rates = getRateForCurrencyGroup(group, from, to);
         if (null != legacy) {
             return rates2legacyXML(rates);
@@ -246,6 +251,7 @@ public class RateResource {
         entityManager.getTransaction().begin();
         CurrencyGroupModel group = entityManager.createQuery("from CurrencyGroupModel where dflt=true", CurrencyGroupModel.class).getSingleResult();
         entityManager.getTransaction().commit();
+        entityManager.close();
         List<ResRate> rates = getRateForCurrencyGroup(group, from, to);
         if (null != legacy) {
             return rates2legacyXML(rates);
@@ -383,6 +389,7 @@ public class RateResource {
         q.setParameter("t_max", tMax);
         List<ResRate> rates = q.getResultList();
         entityManager.getTransaction().commit();
+        entityManager.close();
         return rates;
     }
 

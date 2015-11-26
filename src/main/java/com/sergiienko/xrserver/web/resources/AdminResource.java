@@ -9,6 +9,7 @@ import com.sergiienko.xrserver.models.RateModel;
 import com.sergiienko.xrserver.models.SourceModel;
 import com.sergiienko.xrserver.rest.resources.RateResource;
 import com.sergiienko.xrserver.rest.resources.ResRate;
+import org.glassfish.jersey.process.internal.RequestScoped;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,24 +33,25 @@ import java.util.HashMap;
 /**
  * Serves admin related REST API and HTML pages
  */
+@RequestScoped
 @Path("/")
 public class AdminResource {
     /**
      * Link to the main admin web page
      */
-    private static final String ADMIN_PAGE_LINK = "<a href=\"/admin\">Admin page</a>";
+    private final String ADMIN_PAGE_LINK = "<a href=\"/admin\">Admin page</a>";
 
     /**
      * HTML header
      */
-    private static final String HEADER = "<html><head>"
+    private final String HEADER = "<html><head>"
             + "<link rel=\"stylesheet\" type=\"text/css\" href=\"static/css/main.css\">"
             + "</head><body>";
 
     /**
      * HTML footer
      */
-    private static final String FOOTER = "</body></html>";
+    private final String FOOTER = "</body></html>";
 
     /**
      * Entity manager object, for working with DB
@@ -73,6 +75,7 @@ public class AdminResource {
         List<GroupModel> groups = entityManager.createQuery("from GroupModel", GroupModel.class).getResultList();
         List<CurrencyGroupModel> currencyGroups = entityManager.createQuery("from CurrencyGroupModel", CurrencyGroupModel.class).getResultList();
         entityManager.getTransaction().commit();
+        entityManager.close();
 
         StringBuilder strSources = new StringBuilder();
         for (SourceModel source : sources) {
@@ -173,6 +176,7 @@ public class AdminResource {
         GroupModel group = (GroupModel) q.getSingleResult();
         List<SourceModel> sources = entityManager.createQuery("from SourceModel", SourceModel.class).getResultList();
         entityManager.getTransaction().commit();
+        entityManager.close();
         sb.append("<form action=\"" + groupid + "\" method=\"post\">");
         sb.append("Name <input name=\"name\" value=\"" + group.getName() + "\"><br>");
         sb.append("Description <input name=\"descr\" value=\"" + group.getDescr() + "\"><br>");
@@ -202,6 +206,7 @@ public class AdminResource {
         q.setParameter("arg1", groupid);
         q.executeUpdate();
         entityManager.getTransaction().commit();
+        entityManager.close();
         logger.info("Group " + groupid + " has been removed");
         return "<br>Return to " + ADMIN_PAGE_LINK;
     }
@@ -230,6 +235,7 @@ public class AdminResource {
             res = "We have rates from this source in DB. Cannot be removed.";
         }
         entityManager.getTransaction().commit();
+        entityManager.close();
         logger.info("Source " + sourceid + " has been removed");
         return res + "<br>Return to " + ADMIN_PAGE_LINK;
     }
@@ -249,6 +255,7 @@ public class AdminResource {
         q.setParameter("arg1", sourceid);
         SourceModel source = (SourceModel) q.getSingleResult();
         entityManager.getTransaction().commit();
+        entityManager.close();
         sb.append("<form action=\"" + sourceid + "\" method=\"post\">");
         sb.append("Name <input name=\"name\" value=\"" + source.getName() + "\"><br>");
         sb.append("Description <input name=\"descr\" value=\"" + source.getDescr() + "\"><br>");
@@ -296,6 +303,7 @@ public class AdminResource {
         group.setDefaultGroup(null == dflt ? false : true);
         entityManager.merge(group);
         entityManager.getTransaction().commit();
+        entityManager.close();
         logger.info("Group " + groupid + "has been edited");
         return "Success. Return to " + ADMIN_PAGE_LINK;
     }
@@ -331,6 +339,7 @@ public class AdminResource {
         source.setEnabled((null == enabled ? false : true));
         entityManager.merge(source);
         entityManager.getTransaction().commit();
+        entityManager.close();
         logger.info("Source " + groupid + "has been edited");
         return "Success. Return to " + ADMIN_PAGE_LINK;
     }
@@ -366,6 +375,7 @@ public class AdminResource {
         entityManager.getTransaction().begin();
         entityManager.persist(newsource);
         entityManager.getTransaction().commit();
+        entityManager.close();
         logger.info("New source added: " + url);
         return "Success. Return to " + ADMIN_PAGE_LINK;
     }
@@ -392,6 +402,7 @@ public class AdminResource {
         entityManager.getTransaction().begin();
         entityManager.persist(newgroup);
         entityManager.getTransaction().commit();
+        entityManager.close();
         logger.info("New group added: " + name);
         return "Success. Return to " + ADMIN_PAGE_LINK;
     }
@@ -455,6 +466,7 @@ public class AdminResource {
         q.setParameter("arg1", groupid);
         CurrencyGroupModel group = (CurrencyGroupModel) q.getSingleResult();
         entityManager.getTransaction().commit();
+        entityManager.close();
         sb.append("<form action=\"" + groupid + "\" method=\"post\">");
         sb.append("Name <input name=\"name\" value=\"" + group.getName() + "\"><br>");
         sb.append("Description <input name=\"descr\" value=\"" + group.getDescr() + "\"><br>");
@@ -534,6 +546,7 @@ public class AdminResource {
         group.setDefaultGroup(null == dflt ? false : true);
         entityManager.merge(group);
         entityManager.getTransaction().commit();
+        entityManager.close();
         logger.info("Currency group " + groupid + "has been edited");
         return "Success. Return to " + ADMIN_PAGE_LINK;
     }
@@ -552,6 +565,7 @@ public class AdminResource {
         q.setParameter("arg1", groupid);
         q.executeUpdate();
         entityManager.getTransaction().commit();
+        entityManager.close();
         logger.info("Currency group " + groupid + " has been removed");
         return "<br>Return to " + ADMIN_PAGE_LINK;
     }
@@ -580,6 +594,7 @@ public class AdminResource {
         entityManager.getTransaction().begin();
         entityManager.persist(newgroup);
         entityManager.getTransaction().commit();
+        entityManager.close();
         logger.info("New currency group added: " + name);
         return "Success. Return to " + ADMIN_PAGE_LINK;
     }
