@@ -45,7 +45,8 @@ public class AdminResource {
      * HTML header
      */
     private final String HEADER = "<html><head>"
-            + "<link rel=\"stylesheet\" type=\"text/css\" href=\"static/css/main.css\">"
+            + "<link rel=\"stylesheet\" type=\"text/css\" href=\"/admin/static/css/main.css\">"
+            + "<script src=\"/admin/static/js/sorttable.js\"></script>"
             + "</head><body>";
 
     /**
@@ -461,10 +462,13 @@ public class AdminResource {
     @Produces(MediaType.TEXT_HTML)
     public final String editCurrencyGroup(@PathParam("groupid") final Integer groupid) {
         StringBuilder sb = new StringBuilder(HEADER);
+        RateResource rateRes = new RateResource();
         entityManager.getTransaction().begin();
         Query q = entityManager.createQuery("from CurrencyGroupModel where id=:arg1", CurrencyGroupModel.class);
         q.setParameter("arg1", groupid);
         CurrencyGroupModel group = (CurrencyGroupModel) q.getSingleResult();
+        List<ResRate> ratesList = rateRes.getAllLiveRates();
+        Map<Integer, SourceModel> allSources = getAllSources();
         entityManager.getTransaction().commit();
         entityManager.close();
         sb.append("<form action=\"" + groupid + "\" method=\"post\">");
@@ -474,8 +478,6 @@ public class AdminResource {
         sb.append("Sources in group<br>");
         Integer[] groupSources = group.getSources();
         String[] groupCurrencies = group.getCurrencies();
-        RateResource rateRes = new RateResource();
-        List<ResRate> ratesList = rateRes.getRatesForSourceID(null, null, null);
         Map<Integer, List<ResRate>> ratesMap = new HashMap<>();
         for (ResRate r : ratesList) {
             if (null == ratesMap.get(r.getSource())) {
@@ -483,7 +485,7 @@ public class AdminResource {
             }
             ratesMap.get(r.getSource()).add(r);
         }
-        sb.append("<table><tr><th></th><th>Source ID</th><th>Currency name</th></tr>");
+        sb.append("<table class=\"sortable\"><tr><th></th><th>Source ID</th><th>Source desc</th><th>Currency name</th></tr>");
         for (Map.Entry<Integer, List<ResRate>> entry : ratesMap.entrySet()) {
             Integer sourceID = entry.getKey();
             for (ResRate rate : entry.getValue()) {
@@ -497,7 +499,9 @@ public class AdminResource {
                 }
                 String checkboxValue = sourceID + ":" + currencyName;
                 sb.append("<tr><td><input type=\"checkbox\" name=\"source\" " + checked + " value=\"" + checkboxValue + "\"></td>"
-                        + "<td>" + sourceID + "</td><td>" + currencyName + "</td></tr>");
+                        + "<td>" + sourceID + "</td>"
+                        + "<td>" + allSources.get(sourceID).getDescr() + "</td>"
+                        + "<td>" + currencyName + "</td></tr>");
             }
         }
         sb.append("</table><input type=\"submit\"></form>");
@@ -597,5 +601,14 @@ public class AdminResource {
         entityManager.close();
         logger.info("New currency group added: " + name);
         return "Success. Return to " + ADMIN_PAGE_LINK;
+    }
+
+    private Map<Integer, SourceModel> getAllSources() {
+        List<SourceModel> sources = entityManager.createQuery("from SourceModel").getResultList();
+        Map<Integer, SourceModel> m = new HashMap<>();
+        for (SourceModel source : sources) {
+            m.put(source.getId(),source);
+        }
+        return m;
     }
 }

@@ -420,7 +420,7 @@ public class RateResource {
      * @param to to time point
      * @return list of rates
      */
-    public final List<ResRate> getRatesForSourceID(final Integer sourceID, final String from, final String to) {
+    private final List<ResRate> getRatesForSourceID(final Integer sourceID, final String from, final String to) {
         Date tMin = getTimeMin(from);
         Date tMax = getTimeMax(to);
         Query q;
@@ -430,6 +430,20 @@ public class RateResource {
             q = entityManager.createQuery("SELECT NEW com.sergiienko.xrserver.rest.resources.ResRate(name,rate,MAX(time),source) FROM RateModel WHERE time < :t_max AND time > :t_min AND source = :src GROUP BY name,rate,source", ResRate.class);
             q.setParameter("src", sourceID);
         }
+        q.setParameter("t_min", tMin);
+        q.setParameter("t_max", tMax);
+        List<ResRate> rates = q.getResultList();
+        return rates;
+    }
+
+    /**
+     * Used by admin page for editing currency groups
+     * @return list of all live currencies
+     */
+    public final List<ResRate> getAllLiveRates() {
+        Date tMin = getTimeMin(null);
+        Date tMax = getTimeMax(null);
+        Query q = entityManager.createQuery("SELECT NEW com.sergiienko.xrserver.rest.resources.ResRate(name,MAX(time),source) FROM RateModel WHERE time < :t_max AND time > :t_min GROUP BY name,source", ResRate.class);
         q.setParameter("t_min", tMin);
         q.setParameter("t_max", tMax);
         List<ResRate> rates = q.getResultList();

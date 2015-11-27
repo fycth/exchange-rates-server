@@ -41,6 +41,18 @@ public class ResRate {
     }
 
     /**
+     * Alternative constructor for admin page
+     * @param iName rate name
+     * @param iTime rate time
+     * @param iSource rate source
+     */
+    public ResRate(final String iName, final Date iTime, final Integer iSource) {
+        this.name = iName;
+        this.time = iTime;
+        this.source = iSource;
+    }
+
+    /**
      * get rate name
      * @return rate name
      */
