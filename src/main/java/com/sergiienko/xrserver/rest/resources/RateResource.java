@@ -16,6 +16,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -63,10 +64,10 @@ public class RateResource {
      */
     @Path("/current")
     @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public final String listCurrentRates(@HeaderParam("accept") final String accepts,
+    public final Response listCurrentRates(@HeaderParam("accept") final String accepts,
                                    @QueryParam("from") final String from,
-                                   @QueryParam("to") final String to) {
+                                   @QueryParam("to") final String to,
+                                   @QueryParam("format") final String format) {
         List<ResRate> results = getRatesForSourceID(null, from, to);
         Map<Integer, List<ResRate>> m = new HashMap<>();
         for (ResRate r : results) {
@@ -77,10 +78,18 @@ public class RateResource {
         }
         entityManager.getTransaction().commit();
         entityManager.close();
-        if (-1 != accepts.indexOf("xml")) {
-            return rates2xml(m);
+        if (null != format) {
+            if (format.equals("xml")) {
+                return Response.status(200).entity(rates2xml(m)).type("application/xml").build();
+            }
+            if (format.equals("json")) {
+                return Response.status(200).entity(rates2json(m)).type("application/json").build();
+            }
+        }
+        if (null != accepts && accepts.contains("xml")) {
+            return Response.status(200).entity(rates2xml(m)).type("application/xml").build();
         } else {
-            return rates2json(m);
+            return Response.status(200).entity(rates2json(m)).type("application/json").build();
         }
     }
 
@@ -98,24 +107,32 @@ public class RateResource {
      */
     @Path("/source/{source}")
     @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public final String listCurrentRates(@HeaderParam("accept") final String accepts,
+    public final Response listCurrentRates(@HeaderParam("accept") final String accepts,
                                          @PathParam("source") final Integer sourceID,
                                    @QueryParam("from") final String from,
                                    @QueryParam("to") final String to,
-                                   @QueryParam("legacy") final String legacy) {
+                                   @QueryParam("legacy") final String legacy,
+                                   @QueryParam("format") final String format) {
         List<ResRate> rates = getRatesForSourceID(sourceID, from, to);
         Map<Integer, List<ResRate>> m = new HashMap<>();
         m.put(sourceID, rates);
-        if (null != legacy) {
-            return rates2legacyXML(m);
-        }
         entityManager.getTransaction().commit();
         entityManager.close();
-        if (-1 != accepts.indexOf("xml")) {
-            return rates2xml(m);
+        if (null != legacy) {
+            return Response.status(200).entity(rates2legacyXML(m)).type("application/xml").build();
+        }
+        if (null != format) {
+            if (format.equals("xml")) {
+                return Response.status(200).entity(rates2xml(m)).type("application/xml").build();
+            }
+            if (format.equals("json")) {
+                return Response.status(200).entity(rates2json(m)).type("application/json").build();
+            }
+        }
+        if (null != accepts && accepts.contains("xml")) {
+            return Response.status(200).entity(rates2xml(m)).type("application/xml").build();
         } else {
-            return rates2json(m);
+            return Response.status(200).entity(rates2json(m)).type("application/json").build();
         }
     }
 
@@ -151,19 +168,27 @@ public class RateResource {
      */
     @Path("/group/{groupid}")
     @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public final String listGroupRates(@HeaderParam("accept") final String accepts,
+    public final Response listGroupRates(@HeaderParam("accept") final String accepts,
                                               @PathParam("groupid") final Integer groupid,
-                                              @QueryParam("from") final String from, @QueryParam("to") final String to) {
+                                              @QueryParam("from") final String from, @QueryParam("to") final String to,
+                                              @QueryParam("format") final String format) {
         GroupModel group = entityManager.createQuery("from GroupModel where id=:arg1", GroupModel.class).
                 setParameter("arg1", groupid).getSingleResult();
         Map<Integer, List<ResRate>> rates = getRateForGroup(group, from, to);
         entityManager.getTransaction().commit();
         entityManager.close();
-        if (-1 != accepts.indexOf("xml")) {
-            return rates2xml(rates);
+        if (null != format) {
+            if (format.equals("xml")) {
+                return Response.status(200).entity(rates2xml(rates)).type("application/xml").build();
+            }
+            if (format.equals("json")) {
+                return Response.status(200).entity(rates2json(rates)).type("application/json").build();
+            }
+        }
+        if (null != accepts && accepts.contains("xml")) {
+            return Response.status(200).entity(rates2xml(rates)).type("application/xml").build();
         } else {
-            return rates2json(rates);
+            return Response.status(200).entity(rates2json(rates)).type("application/json").build();
         }
     }
 
@@ -179,18 +204,26 @@ public class RateResource {
      */
     @Path("/group")
     @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public final String listDefGroupRates(@HeaderParam("accept") final String accepts,
+    public final Response listDefGroupRates(@HeaderParam("accept") final String accepts,
                                                  @QueryParam("from") final String from,
-                                                 @QueryParam("to") final String to) {
+                                                 @QueryParam("to") final String to,
+                                                 @QueryParam("format") final String format) {
         GroupModel group = entityManager.createQuery("from GroupModel where dflt=true", GroupModel.class).getSingleResult();
         Map<Integer, List<ResRate>> rates = getRateForGroup(group, from, to);
         entityManager.getTransaction().commit();
         entityManager.close();
-        if (-1 != accepts.indexOf("xml")) {
-            return rates2xml(rates);
+        if (null != format) {
+            if (format.equals("xml")) {
+                return Response.status(200).entity(rates2xml(rates)).type("application/xml").build();
+            }
+            if (format.equals("json")) {
+                return Response.status(200).entity(rates2json(rates)).type("application/json").build();
+            }
+        }
+        if (null != accepts && accepts.contains("xml")) {
+            return Response.status(200).entity(rates2xml(rates)).type("application/xml").build();
         } else {
-            return rates2json(rates);
+            return Response.status(200).entity(rates2json(rates)).type("application/json").build();
         }
     }
 
@@ -208,23 +241,31 @@ public class RateResource {
      */
     @Path("/currencygroup/{groupid}")
     @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public final String getCurrencyGroupRates(@HeaderParam("accept") final String accepts,
+    public final Response getCurrencyGroupRates(@HeaderParam("accept") final String accepts,
                                        @PathParam("groupid") final Integer groupid,
                                        @QueryParam("from") final String from, @QueryParam("to") final String to,
-                                       @QueryParam("legacy") final String legacy) {
+                                       @QueryParam("legacy") final String legacy,
+                                       @QueryParam("format") final String format) {
         CurrencyGroupModel group = entityManager.createQuery("from CurrencyGroupModel where id=:arg1", CurrencyGroupModel.class).
                 setParameter("arg1", groupid).getSingleResult();
         List<ResRate> rates = getRateForCurrencyGroup(group, from, to);
         entityManager.getTransaction().commit();
         entityManager.close();
         if (null != legacy) {
-            return rates2legacyXML(rates);
+            return Response.status(200).entity(rates2legacyXML(rates)).type("application/xml").build();
         }
-        if (-1 != accepts.indexOf("xml")) {
-            return rates2xml(rates);
+        if (null != format) {
+            if (format.equals("xml")) {
+                return Response.status(200).entity(rates2xml(rates)).type("application/xml").build();
+            }
+            if (format.equals("json")) {
+                return Response.status(200).entity(rates2json(rates)).type("application/json").build();
+            }
+        }
+        if (null != accepts && accepts.contains("xml")) {
+            return Response.status(200).entity(rates2xml(rates)).type("application/xml").build();
         } else {
-            return rates2json(rates);
+            return Response.status(200).entity(rates2json(rates)).type("application/json").build();
         }
     }
 
@@ -241,23 +282,30 @@ public class RateResource {
      */
     @Path("/currencygroup")
     @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public final String getDefCurrencyGroupRates(@HeaderParam("accept") final String accepts,
+    public final Response getDefCurrencyGroupRates(@HeaderParam("accept") final String accepts,
                                           @QueryParam("from") final String from,
                                           @QueryParam("to") final String to,
-                                          @QueryParam("legacy") final String legacy) {
-
+                                          @QueryParam("legacy") final String legacy,
+                                          @QueryParam("format") final String format) {
         CurrencyGroupModel group = entityManager.createQuery("from CurrencyGroupModel where dflt=true", CurrencyGroupModel.class).getSingleResult();
         List<ResRate> rates = getRateForCurrencyGroup(group, from, to);
         entityManager.getTransaction().commit();
         entityManager.close();
         if (null != legacy) {
-            return rates2legacyXML(rates);
+            return  Response.status(200).entity(rates2legacyXML(rates)).type("application/xml").build();
         }
-        if (-1 != accepts.indexOf("xml")) {
-            return rates2xml(rates);
+        if (null != format) {
+            if (format.equals("xml")) {
+                return Response.status(200).entity(rates2xml(rates)).type("application/xml").build();
+            }
+            if (format.equals("json")) {
+                return Response.status(200).entity(rates2json(rates)).type("application/json").build();
+            }
+        }
+        if (null != accepts && accepts.contains("xml")) {
+            return Response.status(200).entity(rates2xml(rates)).type("application/xml").build();
         } else {
-            return rates2json(rates);
+            return Response.status(200).entity(rates2json(rates)).type("application/json").build();
         }
     }
 
@@ -522,6 +570,9 @@ public class RateResource {
         return res.toString();
     }
 
+    /**
+     * Init transaction
+     */
     public RateResource() {
         entityManager.getTransaction().begin();
     }
